@@ -1,7 +1,5 @@
 package ec.edu.ups.icc.fundamentos01.products.controllers;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,96 +16,45 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
-import ec.edu.ups.icc.fundamentos01.products.entities.Product;
-import ec.edu.ups.icc.fundamentos01.products.mappers.ProductMapper;
+import ec.edu.ups.icc.fundamentos01.products.services.ProductService;
 
 @RestController
 @RequestMapping("/api/products")
 public class ProductsController {
 
-    private final List<Product> products = new ArrayList<>();
-    private int currentId = 1;
+    private final ProductService service;
+
+    public ProductsController(ProductService service) {
+        this.service = service;
+    }
 
     @GetMapping
     public List<ProductResponseDto> findAll() {
-        return products.stream()
-                .map(ProductMapper::toResponse)
-                .toList();
+        return service.findAll();
     }
 
     @GetMapping("/{id}")
     public Object findOne(@PathVariable int id) {
-        for (Product product : products) {
-            if (product.getId() == id) {
-                return ProductMapper.toResponse(product);
-            }
-        }
-        return new Object() {
-            public String error = "Product not found";
-        };
+        return service.findOne(id);
     }
 
     @PostMapping
     public ProductResponseDto create(@RequestBody CreateProductDto dto) {
-        Product product = ProductMapper.toEntity(currentId++, dto.name, dto.description, dto.price, dto.stock);
-        products.add(product);
-        return ProductMapper.toResponse(product);
+        return service.create(dto);
     }
 
     @PutMapping("/{id}")
     public Object update(@PathVariable int id, @RequestBody UpdateProductDto dto) {
-        for (Product product : products) {
-            if (product.getId() == id) {
-                product.setName(dto.name);
-                product.setDescription(dto.description);
-                product.setPrice(dto.price);
-                product.setStock(dto.stock);
-                return ProductMapper.toResponse(product);
-            }
-        }
-        return new Object() {
-            public String error = "Product not found";
-        };
+        return service.update(id, dto);
     }
 
     @PatchMapping("/{id}")
     public Object partialUpdate(@PathVariable int id, @RequestBody PartialUpdateProductDto dto) {
-        for (Product product : products) {
-            if (product.getId() == id) {
-                if (dto.name != null) {
-                    product.setName(dto.name);
-                }
-                if (dto.description != null) {
-                    product.setDescription(dto.description);
-                }
-                if (dto.price != null) {
-                    product.setPrice(dto.price);
-                }
-                if (dto.stock != null) {
-                    product.setStock(dto.stock);
-                }
-                return ProductMapper.toResponse(product);
-            }
-        }
-        return new Object() {
-            public String error = "Product not found";
-        };
+        return service.partialUpdate(id, dto);
     }
 
     @DeleteMapping("/{id}")
     public Object delete(@PathVariable int id) {
-        Iterator<Product> iterator = products.iterator();
-        while (iterator.hasNext()) {
-            Product product = iterator.next();
-            if (product.getId() == id) {
-                iterator.remove();
-                return new Object() {
-                    public String message = "Deleted successfully";
-                };
-            }
-        }
-        return new Object() {
-            public String error = "Product not found";
-        };
+        return service.delete(id);
     }
 }
