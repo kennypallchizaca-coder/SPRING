@@ -1,7 +1,7 @@
 package ec.edu.ups.icc.fundamentos01.products.services;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -9,73 +9,92 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
-import ec.edu.ups.icc.fundamentos01.products.entities.Product;
+import ec.edu.ups.icc.fundamentos01.products.models.Product;
 import ec.edu.ups.icc.fundamentos01.products.mappers.ProductMapper;
-
+import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
+import ec.edu.ups.icc.fundamentos01.exception.domain.NotFoundException;
+import ec.edu.ups.icc.fundamentos01.exception.domain.ConflictException;
 
 @Service
 public class ProductServiceImpl implements ProductService {
 
-    private List<Product> products = new ArrayList<>();
-    private int currentId = 1;
+    private final ProductRepository productRepo;
 
-    @Override
-    public List<ProductResponseDto> findAll() {
-        return products.stream().map(ProductMapper::toResponse).toList();
+    public ProductServiceImpl(ProductRepository productRepo) {
+        this.productRepo = productRepo;
     }
 
     @Override
-    public Object findOne(int id) {
-        Product product = products.stream()
-                .filter(p -> p.getId() == id)
-                .findFirst()
-                .orElse(null);
+    public List<ProductResponseDto> findAll() {
+        return productRepo.findAll()
+                .stream()
+                .map(Product::fromEntity)
+                .map(ProductMapper::toResponse)
+                .toList();
+    }
 
-        if (product == null) {
-            return new Object() { public String error = "Product not found"; };
-        }
-
-        return ProductMapper.toResponse(product);
+    @Override
+    public ProductResponseDto findOne(int id) {
+        return productRepo.findById((long) id)
+                .map(Product::fromEntity)
+                .map(ProductMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
     }
 
     @Override
     public ProductResponseDto create(CreateProductDto dto) {
-        Product product = ProductMapper.toEntity(currentId++, dto.name, dto.description, dto.price, dto.stock);
-        products.add(product);
-        return ProductMapper.toResponse(product);
+        // Validar que el nombre sea único
+        if (productRepo.findByName(dto.name).isPresent()) {
+            throw new ConflictException("Ya existe un producto con el nombre: " + dto.name);
+        }
+
+        return Optional.of(dto)
+                .map(ProductMapper::fromCreateDto)
+                .map(Product::toEntity)
+                .map(productRepo::save)
+                .map(Product::fromEntity)
+                .map(ProductMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Error al crear el producto"));
     }
 
     @Override
-    public Object update(int id, UpdateProductDto dto) {
-        Product product = products.stream().filter(p -> p.getId() == id).findFirst().orElse(null);
-        if (product == null) return new Object() { public String error = "Product not found"; };
+    public ProductResponseDto update(int id, UpdateProductDto dto) {
+        // Validar que el nombre sea único (si cambió)
+        productRepo.findByName(dto.name).ifPresent(existing -> {
+            if (existing.getId() != id) {
+                throw new ConflictException("Ya existe otro producto con el nombre: " + dto.name);
+            }
+        });
 
-        product.setName(dto.name);
-        product.setDescription(dto.description);
-        product.setPrice(dto.price);
-        product.setStock(dto.stock);
-
-        return ProductMapper.toResponse(product);
+        return productRepo.findById((long) id)
+                .map(Product::fromEntity)
+                .map(product -> product.update(dto))
+                .map(Product::toEntity)
+                .map(productRepo::save)
+                .map(Product::fromEntity)
+                .map(ProductMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
     }
 
     @Override
-    public Object partialUpdate(int id, PartialUpdateProductDto dto) {
-        Product product = products.stream().filter(p -> p.getId() == id).findFirst().orElse(null);
-        if (product == null) return new Object() { public String error = "Product not found"; };
-
-        if (dto.name != null) product.setName(dto.name);
-        if (dto.description != null) product.setDescription(dto.description);
-        if (dto.price != null) product.setPrice(dto.price);
-        if (dto.stock != null) product.setStock(dto.stock);
-
-        return ProductMapper.toResponse(product);
+    public ProductResponseDto partialUpdate(int id, PartialUpdateProductDto dto) {
+        return productRepo.findById((long) id)
+                .map(Product::fromEntity)
+                .map(product -> product.partialUpdate(dto))
+                .map(Product::toEntity)
+                .map(productRepo::save)
+                .map(Product::fromEntity)
+                .map(ProductMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
     }
 
     @Override
-    public Object delete(int id) {
-        boolean removed = products.removeIf(u -> u.getId() == id);
-        if (!removed) return new Object() { public String error = "Product not found"; };
-
-        return new Object() { public String message = "Deleted successfully"; };
+    public void delete(int id) {
+        productRepo.findById((long) id)
+                .ifPresentOrElse(
+                        productRepo::delete,
+                        () -> {
+                            throw new IllegalStateException("Producto no encontrado");
+                        });
     }
 }

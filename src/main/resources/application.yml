@@ -1,4 +1,21 @@
 spring:
   application:
     name: fundamentos01
-    
+  
+  # Configuración de la fuente de datos PostgreSQL
+  datasource:
+    url: jdbc:postgresql://localhost:5432/devdb
+    username: ups
+    password: ups123
+  
+  # Configuración JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: update  # Crea/actualiza tablas automáticamente
+    properties:
+      hibernate:
+        format_sql: true  # Formatea SQL en los logs
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8080
