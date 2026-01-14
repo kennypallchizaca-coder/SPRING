@@ -9,7 +9,7 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
 
 public interface ProductService {
 
-    List<ProductResponseDto> findAll();
+    //List<ProductResponseDto> findAll();
 
     ProductResponseDto findOne(int id);
 
@@ -20,4 +20,13 @@ public interface ProductService {
     ProductResponseDto partialUpdate(int id, PartialUpdateProductDto dto);
 
     void delete(int id);
+
+    boolean validateProductName(String name, int id);
+
+    boolean secureUpdateProduct(String name, String description, double price);
+
+    List<ProductResponseDto> findAll();
+
+
+
 }

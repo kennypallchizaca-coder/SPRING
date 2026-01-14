@@ -1,20 +1,22 @@
 package ec.edu.ups.icc.fundamentos01.products.models;
 
+import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
+import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
 
 public class Product {
 
-    private int id;
+    private long id;
     private String name;
     private String description;
     private double price;
-    private int stock;
+    private Integer stock;
 
-    public Product(int id, String name, String description, double price, int stock) {
+    public Product(long id, String name, String description, double price, Integer stock) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -22,12 +24,19 @@ public class Product {
         this.stock = stock;
     }
 
+    public Product(String name, String description, double price, Integer stock) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stock = stock;
+    }
+
     // Getters y Setters
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -59,25 +68,29 @@ public class Product {
         return stock;
     }
 
-    public void setStock(int stock) {
+    public void setStock(Integer stock) {
         this.stock = stock;
     }
 
     // ==================== FACTORY METHODS ====================
 
-    /**
-     * Crea un Product desde un DTO de creación
-     * 
-     * @param dto DTO con datos del formulario
-     * @return instancia de Product para lógica de negocio
-     */
     public static Product fromDto(CreateProductDto dto) {
-        return new Product(0, dto.name, dto.description, dto.price, dto.stock);
+        return new Product(dto.name, dto.description, dto.price, dto.stock);
     }
 
     /**
+     * Crea un Product desde un DTO de creación
+     *
+     * @param dto DTO con datos del formulario
+     * @return instancia de Product para lógica de negocio
+     */
+    // public static Product fromDto(CreateProductDto dto) {
+    // return new Product(0, dto.name, dto.description, dto.price, dto.stock);
+    // }
+
+    /**
      * Crea un Product desde una entidad persistente
-     * 
+     *
      * @param entity Entidad recuperada de la BD
      * @return instancia de Product para lógica de negocio
      */
@@ -94,7 +107,7 @@ public class Product {
 
     /**
      * Convierte este Product a una entidad persistente
-     * 
+     *
      * @return ProductEntity lista para guardar en BD
      */
     public ProductEntity toEntity() {
@@ -109,14 +122,27 @@ public class Product {
         return entity;
     }
 
+    public ProductEntity toEntity(UserEntity owner, CategoryEntity categoryEntity) {
+        ProductEntity entity = new ProductEntity();
+        if (this.id > 0) {
+            entity.setId((long) this.id);
+        }
+        entity.setName(this.name);
+        entity.setDescription(this.description);
+        entity.setPrice(this.price);
+        entity.setStock(this.stock);
+        entity.setOwner(owner);
+        entity.setCategory(categoryEntity);
+        return entity;
+    }
+
     /**
      * Convierte este Product a un DTO de respuesta
-     * 
+     *
      * @return DTO sin información sensible
      */
     public ProductResponseDto toResponseDto() {
         ProductResponseDto dto = new ProductResponseDto();
-        dto.id = this.id;
         dto.name = this.name;
         dto.description = this.description;
         dto.price = this.price;
@@ -126,7 +152,7 @@ public class Product {
 
     /**
      * Aplica actualización completa desde UpdateProductDto
-     * 
+     *
      * @param dto DTO con campos a actualizar
      * @return this para encadenamiento
      */
@@ -140,7 +166,7 @@ public class Product {
 
     /**
      * Aplica actualización parcial desde PartialUpdateProductDto
-     * 
+     *
      * @param dto DTO con campos opcionales a actualizar
      * @return this para encadenamiento
      */

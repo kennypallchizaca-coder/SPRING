@@ -2,6 +2,7 @@ package ec.edu.ups.icc.fundamentos01.products.controllers;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,6 +17,7 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
+import ec.edu.ups.icc.fundamentos01.products.dtos.ValidateProductNameDto;
 import ec.edu.ups.icc.fundamentos01.products.services.ProductService;
 import jakarta.validation.Valid;
 
@@ -58,4 +60,20 @@ public class ProductsController {
     public void delete(@PathVariable int id) {
         service.delete(id);
     }
+
+    @PostMapping("/validate-name")
+    public ResponseEntity<Boolean> validateProductName(@Valid @RequestBody ValidateProductNameDto dto) {
+        service.validateProductName(dto.name, dto.id);
+        return ResponseEntity.ok().body(true);
+        
+        
+        
+    }
+    @PostMapping("/justificacion")
+    public String postMethodName(@RequestBody String entity) {
+        
+        return entity;
+    }
+    
+    
 }

@@ -21,4 +21,9 @@ public class CreateProductDto {
     @NotNull(message = "El stock es obligatorio")
     @Min(value = 0, message = "El stock no puede ser negativo")
     public int stock;
+
+    @NotNull(message = "El ID del usuario es obligatorio")
+    public long userId;
+    @NotNull(message = "El ID de la categoría es obligatorio")
+    public long categoryId;
 }

@@ -11,10 +11,10 @@ spring:
   # Configuración JPA/Hibernate
   jpa:
     hibernate:
-      ddl-auto: update  # Crea/actualiza tablas automáticamente
+      ddl-auto: create-drop
     properties:
       hibernate:
-        format_sql: true  # Formatea SQL en los logs
+        '[format_sql]': true  # Formatea SQL en los logs
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:

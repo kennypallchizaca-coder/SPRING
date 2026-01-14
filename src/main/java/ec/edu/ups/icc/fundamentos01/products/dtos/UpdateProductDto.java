@@ -21,4 +21,10 @@ public class UpdateProductDto {
     @NotNull(message = "El stock es obligatorio")
     @Min(value = 0, message = "El stock no puede ser negativo")
     public int stock;
+
+    public Long categoryId;
+
+    //NO PUEDO ACTUALIZAR EL DUEÑO DEL PRODUCTO
+    //public Long userId;
+    
 }
