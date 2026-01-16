@@ -11,10 +11,8 @@ public class ProductResponseDto {
     public double price;
     public Integer stock;
 
-    // Relaciones con estructura anidada
-    public UserSummaryDto user; // Corregido de userId
-    public CategoryResponseDto category; // Corregido de categoryId
-    public List<CategoryResponseDto> categories; // Lista de categorías ManyToMany
+    public UserSummaryDto user;
+    public List<CategoryResponseDto> categories;
 
     // Auditoría
     public LocalDateTime createdAt;

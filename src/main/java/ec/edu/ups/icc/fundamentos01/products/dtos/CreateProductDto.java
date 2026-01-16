@@ -1,6 +1,6 @@
 package ec.edu.ups.icc.fundamentos01.products.dtos;
 
-import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -26,8 +26,8 @@ public class CreateProductDto {
 
     @NotNull(message = "El ID del usuario es obligatorio")
     public long userId;
-    @NotNull(message = "El ID de la categoría es obligatorio")
-    public long categoryId;
 
-    public List<Long> categoryIds;//[4,2]
+    @NotNull(message = "Debe especificar al menos una categoría")
+    @Size(min = 1, message = "El producto debe tener al menos una categoría")
+    public Set<Long> categoryIds;
 }

@@ -80,9 +80,4 @@ public class ProductsController {
         return service.findByCategoryId(categoryId);
     }
 
-    @PostMapping("/justificacion")
-    public String postMethodName(@RequestBody String entity) {
-        return entity;
-    }
-
 }
