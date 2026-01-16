@@ -1,5 +1,7 @@
 package ec.edu.ups.icc.fundamentos01.products.dtos;
 
+import java.util.Set;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,9 +24,7 @@ public class UpdateProductDto {
     @Min(value = 0, message = "El stock no puede ser negativo")
     public int stock;
 
-    public Long categoryId;
-
-    //NO PUEDO ACTUALIZAR EL DUEÑO DEL PRODUCTO
-    //public Long userId;
-    
+    @NotNull(message = "Debe especificar al menos una categoría")
+    @Size(min = 1, message = "El producto debe tener al menos una categoría")
+    public Set<Long> categoryIds;
 }

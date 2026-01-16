@@ -1,6 +1,5 @@
 package ec.edu.ups.icc.fundamentos01.products.models;
 
-import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
@@ -79,16 +78,6 @@ public class Product {
     }
 
     /**
-     * Crea un Product desde un DTO de creación
-     *
-     * @param dto DTO con datos del formulario
-     * @return instancia de Product para lógica de negocio
-     */
-    // public static Product fromDto(CreateProductDto dto) {
-    // return new Product(0, dto.name, dto.description, dto.price, dto.stock);
-    // }
-
-    /**
      * Crea un Product desde una entidad persistente
      *
      * @param entity Entidad recuperada de la BD
@@ -119,20 +108,7 @@ public class Product {
         entity.setDescription(this.description);
         entity.setPrice(this.price);
         entity.setStock(this.stock);
-        return entity;
-    }
-
-    public ProductEntity toEntity(UserEntity owner, CategoryEntity categoryEntity) {
-        ProductEntity entity = new ProductEntity();
-        if (this.id > 0) {
-            entity.setId((long) this.id);
-        }
-        entity.setName(this.name);
-        entity.setDescription(this.description);
-        entity.setPrice(this.price);
-        entity.setStock(this.stock);
         entity.setOwner(owner);
-        entity.setCategory(categoryEntity);
         return entity;
     }
 

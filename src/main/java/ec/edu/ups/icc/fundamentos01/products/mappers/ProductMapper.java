@@ -1,5 +1,6 @@
 package ec.edu.ups.icc.fundamentos01.products.mappers;
 
+import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
@@ -34,31 +35,34 @@ public class ProductMapper {
     public static ProductResponseDto toResponse(ProductEntity entity) {
         ProductResponseDto dto = new ProductResponseDto();
 
-        // Campos básicos
         dto.id = entity.getId();
         dto.name = entity.getName();
         dto.description = entity.getDescription();
         dto.price = entity.getPrice();
         dto.stock = entity.getStock();
 
-        // Crear objeto User anidado
         ProductResponseDto.UserSummaryDto userDto = new ProductResponseDto.UserSummaryDto();
         userDto.id = entity.getOwner().getId();
         userDto.name = entity.getOwner().getName();
         userDto.email = entity.getOwner().getEmail();
         dto.user = userDto;
 
-        // Crear objeto Category anidado
-        CategoryResponseDto categoryDto = new CategoryResponseDto();
-        categoryDto.id = entity.getCategory().getId();
-        categoryDto.name = entity.getCategory().getName();
-        categoryDto.description = entity.getCategory().getDescription();
-        dto.category = categoryDto;
+        dto.categories = entity.getCategories().stream()
+                .map(ProductMapper::toCategoryResponseDto)
+                .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
+                .toList();
 
-        // Auditoría
         dto.createdAt = entity.getCreatedAt();
         dto.updatedAt = entity.getUpdatedAt();
 
+        return dto;
+    }
+
+    private static CategoryResponseDto toCategoryResponseDto(CategoryEntity category) {
+        CategoryResponseDto dto = new CategoryResponseDto();
+        dto.id = category.getId();
+        dto.name = category.getName();
+        dto.description = category.getDescription();
         return dto;
     }
 }

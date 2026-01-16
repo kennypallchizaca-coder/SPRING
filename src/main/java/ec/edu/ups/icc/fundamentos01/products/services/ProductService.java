@@ -9,8 +9,6 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
 
 public interface ProductService {
 
-    //List<ProductResponseDto> findAll();
-
     ProductResponseDto findOne(int id);
 
     ProductResponseDto create(CreateProductDto dto);
@@ -22,8 +20,6 @@ public interface ProductService {
     void delete(int id);
 
     boolean validateProductName(String name, int id);
-
-    boolean secureUpdateProduct(String name, String description, double price);
 
     List<ProductResponseDto> findAll();
 

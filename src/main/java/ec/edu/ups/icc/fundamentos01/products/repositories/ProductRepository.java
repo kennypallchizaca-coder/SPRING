@@ -18,15 +18,15 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     java.util.List<ProductEntity> findByStockGreaterThan(Integer stock);
 
-    List<ProductEntity> findByOwnerId(Long user_id);
-
-    List<ProductEntity> findByCategoryId(Long category_id);
+    List<ProductEntity> findByOwnerId(Long userId);
 
     List<ProductEntity> findByOwnerName(String name);
 
-    List<ProductEntity> findByCategoryName(String name);
-    
-    List<ProductEntity> findByCategoriesIdAndPriceGreaterThan(Long category_id, Double price);
+    List<ProductEntity> findByCategoriesId(Long categoryId);
+
+    List<ProductEntity> findByCategoriesName(String name);
+
+    List<ProductEntity> findByCategoriesIdAndPriceGreaterThan(Long categoryId, Double price);
 
 
 }
