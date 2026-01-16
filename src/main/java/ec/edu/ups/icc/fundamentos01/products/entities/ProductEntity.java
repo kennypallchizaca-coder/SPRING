@@ -1,5 +1,7 @@
 package ec.edu.ups.icc.fundamentos01.products.entities;
 
+import java.util.Set;
+
 import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.core.entities.BaseModel;
 import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
@@ -30,6 +32,27 @@ public class ProductEntity extends BaseModel {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private CategoryEntity category;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "products_categories", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<CategoryEntity> categories;
+    // Métodos para manejar la relación Many-to-Many
+
+    public Set<CategoryEntity> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(Set<CategoryEntity> categories) {
+        this.categories = categories;
+    }
+
+    public void removeCategory(CategoryEntity category) {
+        this.categories.remove(category);
+    }
+
+    public void cleanCategories() {
+        this.categories.clear();
+    }
 
     // Getters y Setters
 

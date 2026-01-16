@@ -100,8 +100,6 @@ public class GlobalExceptionHandler {
                 "Error interno del servidor",
                 request.getRequestURI());
 
-        // TODO: Registrar el error completo en logs para debugging
-        // log.error("Unexpected error", ex);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

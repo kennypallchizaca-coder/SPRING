@@ -110,7 +110,7 @@ public class Product {
      *
      * @return ProductEntity lista para guardar en BD
      */
-    public ProductEntity toEntity() {
+    public ProductEntity toEntity(UserEntity owner) {
         ProductEntity entity = new ProductEntity();
         if (this.id > 0) {
             entity.setId((long) this.id);

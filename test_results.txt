@@ -1,0 +1,76 @@
+============================================================
+[TESTS] PRUEBAS DE RELACI╙N ENTRE ENTIDADES (FASE 1 y 2)
+[DOC] Basado en: 08_relacion_entidades.md
+[GOAL] Objetivo: Validar endpoints de relaciones 1:N
+============================================================
+=== INFORMACI╙N DEL REPOSITORIO ===
+┌ltimo commit: 2026-01-13 19:58:50 -0500 - update
+------------------------------------------------------------
+
+[TEST] CONFIGURACI╙N INICIAL (1 punto)
+--------------------------------------------------
+[OK] Contar productos iniciales
+   [INFO] Productos iniciales: 0
+   [+] +0.5 puntos: Conteo inicial de productos obtenido
+[OK] Obtener usuarios existentes
+   [USER] Usuario encontrado con ID: 1 - Nombre: Test User
+   [+] +0.5 puntos: Usuario existente seleccionado
+
+[TEST] CREAR PRODUCTO CON RELACIONES 1:N (2 puntos)
+--------------------------------------------------
+[OK] Crear producto con userId y categoryId
+   [+] +1 punto: Producto creado con relaci≤n a usuario
+   [+] +1 punto: Producto creado con relaci≤n a categorφa
+   [PRODUCT] Producto creado con ID: 1
+
+[TEST] OBTENER PRODUCTO POR ID (1 punto)
+--------------------------------------------------
+[OK] Obtener producto ID 1
+   [+] +1 punto: Producto incluye informaci≤n de relaciones
+
+[TEST] OBTENER PRODUCTOS POR USUARIO (1.5 puntos)
+--------------------------------------------------
+[OK] Obtener productos del usuario 1
+   [+] +1.5 puntos: Encontrados 1 producto(s) del usuario
+
+[TEST] OBTENER PRODUCTOS POR CATEGOR═A (1.5 puntos)
+--------------------------------------------------
+[OK] Obtener productos de la categorφa 1
+   [+] +1.5 puntos: Encontrados 1 producto(s) de la categorφa
+
+[TEST] ACTUALIZAR PRODUCTO (1.5 puntos)
+--------------------------------------------------
+[OK] Actualizar producto 1
+   [+] +1.5 puntos: Producto actualizado correctamente
+
+[TEST] VALIDACI╙N SECUENCIAL (1 punto)
+--------------------------------------------------
+[OK] Contar productos finales
+   [INFO] Productos iniciales: 0
+   [INFO] Productos finales: 1
+   [+] +1 punto: El conteo de productos aument≤ correctamente
+
+[TEST] LIMPIAR DATOS DE PRUEBA (0.5 puntos)
+--------------------------------------------------
+[OK] Eliminar producto de prueba 1
+   [DELETE] Producto de prueba eliminado
+   [+] +0.5 puntos: Producto de prueba eliminado
+
+============================================================
+RESULTADO FINAL
+============================================================
+Puntos obtenidos: 10.0 / 10
+Calificaci≤n final: 10.0 / 10
+[EXCELLENT] íExcelente! Implementaci≤n completa
+
+[ENDPOINTS] Endpoints evaluados:
+   - POST /api/products (con relaciones)
+   - GET /api/products/{id}
+   - GET /api/products/user/{userId}
+   - GET /api/products/category/{categoryId}
+   - PUT /api/products/{id}
+   - Validaci≤n secuencial de datos
+
+[NOTE] Nota: Este script eval·a la implementaci≤n bßsica
+    de relaciones 1:N. Para relaciones N:N, se requiere
+    implementaci≤n adicional seg·n la Fase 2 del documento.

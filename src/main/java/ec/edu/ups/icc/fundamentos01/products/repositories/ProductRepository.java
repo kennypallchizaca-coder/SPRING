@@ -26,6 +26,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     List<ProductEntity> findByCategoryName(String name);
     
-    List<ProductEntity> findByCategoryIdAndPriceGreaterThan(Long category_id, Double price);
+    List<ProductEntity> findByCategoriesIdAndPriceGreaterThan(Long category_id, Double price);
+
 
 }

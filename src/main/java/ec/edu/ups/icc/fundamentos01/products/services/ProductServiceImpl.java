@@ -1,23 +1,24 @@
 package ec.edu.ups.icc.fundamentos01.products.services;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
+import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryResponseDto;
+import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
 import ec.edu.ups.icc.fundamentos01.products.models.Product;
-import ec.edu.ups.icc.fundamentos01.products.mappers.ProductMapper;
 import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
 import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
 import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 import ec.edu.ups.icc.fundamentos01.exception.domain.NotFoundException;
-import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
-import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryResponseDto;
-import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.exception.domain.ConflictException;
 
 @Service
@@ -33,21 +34,34 @@ public class ProductServiceImpl implements ProductService {
         this.categoryRepo = categoryRepo;
     }
 
+    private List<CategoryEntity> validarCategorias(List<Long> categoryIds) {
+        List<CategoryEntity> categories = new ArrayList<>();
+        for (Long categoryId : categoryIds) {
+            CategoryEntity category = categoryRepo.findById(categoryId)
+                    .orElseThrow(() -> new NotFoundException("Categoría no encontrada con ID: " + categoryId));
+            categories.add(category);
+        }
+        return categories;
+    }
+
+    private CategoryEntity validarCategoria(Long categoryId) {
+        return categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Categoría no encontrada con ID: " + categoryId));
+    }
+
     @Override
     public List<ProductResponseDto> findAll() {
         return productRepo.findAll()
                 .stream()
-                .map(Product::fromEntity)
-                .map(ProductMapper::toResponse)
+                .map(this::toResponseDto)
                 .toList();
     }
 
     @Override
     public ProductResponseDto findOne(int id) {
-        return productRepo.findById((long) id)
-                .map(Product::fromEntity)
-                .map(ProductMapper::toResponse)
+        ProductEntity entity = productRepo.findById((long) id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
+        return toResponseDto(entity);
     }
     // CON UN USUARIO Y CON CATEGORIA
     // VALIDAR SU EXITENCIA
@@ -61,11 +75,21 @@ public class ProductServiceImpl implements ProductService {
         UserEntity owner = userRepo.findById(dto.userId)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + dto.userId));
 
-        CategoryEntity category = categoryRepo.findById(dto.categoryId)
-                .orElseThrow(() -> new NotFoundException("Categoria no encontrada con ID: " + dto.categoryId));
+        CategoryEntity category = validarCategoria(dto.categoryId);
+
+        // Validar y obtener las categorías múltiples si se proporcionan
+        List<CategoryEntity> categoriasList = new ArrayList<>();
+        if (dto.categoryIds != null && !dto.categoryIds.isEmpty()) {
+            categoriasList = validarCategorias(dto.categoryIds);
+        }
 
         Product newProduct = Product.fromDto(dto);
         ProductEntity entity = newProduct.toEntity(owner, category);
+
+        // Asignar las categorías múltiples al producto
+        if (!categoriasList.isEmpty()) {
+            entity.setCategories(new HashSet<>(categoriasList));
+        }
 
         // PERSISTIR
         ProductEntity saved = productRepo.save(entity);
@@ -98,7 +122,18 @@ public class ProductServiceImpl implements ProductService {
         categoryDto.id = entity.getCategory().getId();
         categoryDto.name = entity.getCategory().getName();
         categoryDto.description = entity.getCategory().getDescription();
-        dto.category = categoryDto; // CORREGIDO: category en lugar de categoryId
+        dto.category = categoryDto; 
+
+        // Crear lista de categorías ManyToMany
+        if (entity.getCategories() != null && !entity.getCategories().isEmpty()) {
+            dto.categories = entity.getCategories().stream().map(cat -> {
+                CategoryResponseDto catDto = new CategoryResponseDto();
+                catDto.id = cat.getId();
+                catDto.name = cat.getName();
+                catDto.description = cat.getDescription();
+                return catDto;
+            }).toList();
+        }
 
         // Auditoría
         dto.createdAt = entity.getCreatedAt();
@@ -124,6 +159,12 @@ public class ProductServiceImpl implements ProductService {
         existingEntity.setDescription(dto.description);
         existingEntity.setPrice(dto.price);
         existingEntity.setStock(dto.stock);
+
+        // Actualizar categoría si se proporciona
+        if (dto.categoryId != null) {
+            CategoryEntity category = validarCategoria(dto.categoryId);
+            existingEntity.setCategory(category);
+        }
 
         ProductEntity saved = productRepo.save(existingEntity);
         return toResponseDto(saved);
@@ -180,6 +221,29 @@ public class ProductServiceImpl implements ProductService {
             }
         });
         return true;
+    }
+
+    @Override
+    public List<ProductResponseDto> findByUserId(Long userId) {
+        // Verificar que el usuario existe
+        userRepo.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
+
+        return productRepo.findByOwnerId(userId)
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
+    @Override
+    public List<ProductResponseDto> findByCategoryId(Long categoryId) {
+        // Verificar que la categoría existe
+        validarCategoria(categoryId);
+
+        return productRepo.findByCategoryId(categoryId)
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 
 }

@@ -27,6 +27,8 @@ public interface ProductService {
 
     List<ProductResponseDto> findAll();
 
+    List<ProductResponseDto> findByUserId(Long userId);
 
+    List<ProductResponseDto> findByCategoryId(Long categoryId);
 
 }
