@@ -4,5 +4,4 @@ public class SecureUpdateProductDto {
     public String name;
     public String description;
     public double price;
-    
 }

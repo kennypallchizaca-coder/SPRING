@@ -136,14 +136,15 @@ def get_all_products():
     return requests.get(API_PRODUCTS)
 
 
-def create_product(name: str, price: float, description: str, user_id: int, category_id: int):
-    """Crea un producto con relaciones"""
+def create_product(name: str, price: float, description: str, user_id: int, category_ids: List[int], stock: int = 10):
+    """Crea un producto con relaciones N:N"""
     product_data = {
         "name": name,
         "price": price,
         "description": description,
         "userId": user_id,
-        "categoryId": category_id
+        "categoryIds": category_ids,
+        "stock": stock
     }
     return requests.post(API_PRODUCTS, json=product_data)
 
@@ -163,13 +164,14 @@ def get_products_by_category(category_id: int):
     return requests.get(f"{API_PRODUCTS}/category/{category_id}")
 
 
-def update_product(product_id: int, name: str, price: float, description: str, category_id: int):
+def update_product(product_id: int, name: str, price: float, description: str, category_ids: List[int], stock: int = 10):
     """Actualiza un producto"""
     update_data = {
         "name": name,
         "price": price,
         "description": description,
-        "categoryId": category_id
+        "categoryIds": category_ids,
+        "stock": stock
     }
     return requests.put(f"{API_PRODUCTS}/{product_id}", json=update_data)
 
@@ -239,9 +241,10 @@ def test_create_product():
             1299.99, 
             "Laptop para pruebas de relaciones", 
             test_user_id, 
-            test_category_id
+            [test_category_id],  # Lista de categoryIds para N:N
+            10  # stock
         ),
-        "Crear producto con userId y categoryId",
+        "Crear producto con userId y categoryIds (N:N)",
         [201,200]
     )
     
@@ -253,8 +256,8 @@ def test_create_product():
         if 'ownerName' in product_data or 'owner' in product_data or 'user' in product_data:
             add_points(1, "Producto creado con relación a usuario")
         
-        if 'categoryName' in product_data or 'category' in product_data:
-            add_points(1, "Producto creado con relación a categoría")
+        if 'categoryName' in product_data or 'category' in product_data or 'categories' in product_data:
+            add_points(1, "Producto creado con relación a categoría(s)")
         
         print(f"   [PRODUCT] Producto creado con ID: {test_product_id}")
         return True
@@ -280,7 +283,7 @@ def test_get_product_by_id():
         
         # Validar que incluya información de relaciones
         has_owner_info = 'ownerName' in product_data or 'owner' in product_data or 'user' in product_data
-        has_category_info = 'categoryName' in product_data or 'category' in product_data 
+        has_category_info = 'categoryName' in product_data or 'category' in product_data or 'categories' in product_data 
         
         if has_owner_info and has_category_info:
             add_points(1, "Producto incluye información de relaciones")
@@ -354,7 +357,8 @@ def test_update_product():
             "Laptop Test Relations - Updated",
             1399.99,
             "Laptop actualizada para pruebas",
-            test_category_id
+            [test_category_id],  # Lista de categoryIds para N:N
+            10  # stock
         ),
         f"Actualizar producto {test_product_id}"
     )

@@ -38,7 +38,7 @@ public class ProductsController {
     }
 
     @GetMapping("/{id}")
-    public ProductResponseDto findOne(@PathVariable int id) {
+    public ProductResponseDto findOne(@PathVariable("id") int id) {
         return service.findOne(id);
     }
 
@@ -49,17 +49,17 @@ public class ProductsController {
     }
 
     @PutMapping("/{id}")
-    public ProductResponseDto update(@PathVariable int id, @Valid @RequestBody UpdateProductDto dto) {
+    public ProductResponseDto update(@PathVariable("id") int id, @Valid @RequestBody UpdateProductDto dto) {
         return service.update(id, dto);
     }
 
     @PatchMapping("/{id}")
-    public ProductResponseDto partialUpdate(@PathVariable int id, @Valid @RequestBody PartialUpdateProductDto dto) {
+    public ProductResponseDto partialUpdate(@PathVariable("id") int id, @Valid @RequestBody PartialUpdateProductDto dto) {
         return service.partialUpdate(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") int id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
@@ -71,12 +71,12 @@ public class ProductsController {
     }
 
     @GetMapping("/user/{userId}")
-    public List<ProductResponseDto> findByUserId(@PathVariable Long userId) {
+    public List<ProductResponseDto> findByUserId(@PathVariable("userId") Long userId) {
         return service.findByUserId(userId);
     }
 
     @GetMapping("/category/{categoryId}")
-    public List<ProductResponseDto> findByCategoryId(@PathVariable Long categoryId) {
+    public List<ProductResponseDto> findByCategoryId(@PathVariable("categoryId") Long categoryId) {
         return service.findByCategoryId(categoryId);
     }
 

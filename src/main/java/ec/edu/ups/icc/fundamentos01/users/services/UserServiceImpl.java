@@ -4,6 +4,9 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
+import ec.edu.ups.icc.fundamentos01.products.mappers.ProductMapper;
+import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
 import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UpdateUserDto;
@@ -20,21 +23,19 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepo;
+    private final ProductRepository productRepo;
 
-    public UserServiceImpl(UserRepository userRepo) {
+    public UserServiceImpl(UserRepository userRepo, ProductRepository productRepo) {
         this.userRepo = userRepo;
+        this.productRepo = productRepo;
     }
 
     @Override
     public List<UserResponseDto> findAll() {
-        // 1. El repositorio devuelve entidades JPA (UserEntity)
         return userRepo.findAll()
                 .stream()
-                // 2. Cada UserEntity se transforma en un modelo de dominio User
                 .map(User::fromEntity)
-                // 3. El modelo de dominio se convierte en DTO de respuesta
                 .map(UserMapper::toResponse)
-                // 4. Se recopila el resultado final como una lista de DTOs
                 .toList();
     }
 
@@ -48,7 +49,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto create(CreateUserDto dto) {
-        // Validar que el email sea único
+        // Validar email unico.
         if (userRepo.findByEmail(dto.email).isPresent()) {
             throw new ConflictException("El email ya está registrado");
         }
@@ -64,7 +65,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto update(int id, UpdateUserDto dto) {
-        // Validar que el email sea único (si cambió)
+        // Validar email unico.
         userRepo.findByEmail(dto.email).ifPresent(existing -> {
             if (existing.getId() != id) {
                 throw new ConflictException("El email ya está registrado por otro usuario");
@@ -72,49 +73,47 @@ public class UserServiceImpl implements UserService {
         });
 
         return userRepo.findById((long) id)
-                // Entity → Domain
                 .map(User::fromEntity)
-                // Aplicar cambios permitidos en el dominio
                 .map(user -> user.update(dto))
-                // Domain → Entity
                 .map(User::toEntity)
-                // Persistencia
                 .map(userRepo::save)
-                // Entity → Domain
                 .map(User::fromEntity)
-                // Domain → DTO
                 .map(UserMapper::toResponse)
-                // Error controlado si no existe
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
     }
 
     @Override
     public UserResponseDto partialUpdate(int id, PartialUpdateUserDto dto) {
         return userRepo.findById((long) id)
-                // Entity → Domain
                 .map(User::fromEntity)
-                // Aplicar solo los cambios presentes
                 .map(user -> user.partialUpdate(dto))
-                // Domain → Entity
                 .map(User::toEntity)
-                // Persistencia
                 .map(userRepo::save)
-                // Entity → Domain
                 .map(User::fromEntity)
-                // Domain → DTO
                 .map(UserMapper::toResponse)
-                // Error si no existe
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
     }
 
     @Override
     public void delete(int id) {
-        // Verifica existencia y elimina
+        // Elimina si existe.
         userRepo.findById((long) id)
                 .ifPresentOrElse(
                         userRepo::delete,
                         () -> {
                             throw new IllegalStateException("Usuario no encontrado");
                         });
+    }
+
+    @Override
+    public List<ProductResponseDto> getProductsByUserId(Long userId) {
+        // Consulta productos por ownerId usando ProductRepository.
+        userRepo.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
+
+        return productRepo.findByOwnerId(userId)
+                .stream()
+                .map(ProductMapper::toResponse)
+                .toList();
     }
 }

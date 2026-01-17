@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UpdateUserDto;
@@ -35,7 +36,7 @@ public class UsersController {
     }
 
     @GetMapping("/{id}")
-    public UserResponseDto findOne(@PathVariable int id) {
+    public UserResponseDto findOne(@PathVariable("id") int id) {
         return service.findOne(id);
     }
 
@@ -45,17 +46,23 @@ public class UsersController {
     }
 
     @PutMapping("/{id}")
-    public UserResponseDto update(@PathVariable int id, @Valid @RequestBody UpdateUserDto dto) {
+    public UserResponseDto update(@PathVariable("id") int id, @Valid @RequestBody UpdateUserDto dto) {
         return service.update(id, dto);
     }
 
     @PatchMapping("/{id}")
-    public UserResponseDto partialUpdate(@PathVariable int id, @Valid @RequestBody PartialUpdateUserDto dto) {
+    public UserResponseDto partialUpdate(@PathVariable("id") int id, @Valid @RequestBody PartialUpdateUserDto dto) {
         return service.partialUpdate(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable int id) {
+    public void delete(@PathVariable("id") int id) {
         service.delete(id);
+    }
+
+    @GetMapping("/{id}/products")
+    // GET /api/users/{id}/products: productos del usuario.
+    public List<ProductResponseDto> findProductsByUserId(@PathVariable("id") Long id) {
+        return service.getProductsByUserId(id);
     }
 }

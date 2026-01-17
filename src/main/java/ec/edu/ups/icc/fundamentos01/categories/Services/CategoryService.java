@@ -5,6 +5,7 @@ import java.util.List;
 import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryResponseDto;
 import ec.edu.ups.icc.fundamentos01.categories.entity.CreateCategoryDto;
 import ec.edu.ups.icc.fundamentos01.categories.entity.UpdateCategoryDto;
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 
 public interface CategoryService {
 
@@ -17,4 +18,9 @@ public interface CategoryService {
     CategoryResponseDto update(Long id, UpdateCategoryDto dto);
 
     void delete(Long id);
+
+    // Cuenta productos por categoria.
+    Long countProductsByCategoryId(Long categoryId);
+
+    List<ProductResponseDto> getProductsByCategoryId(Long categoryId);
 }

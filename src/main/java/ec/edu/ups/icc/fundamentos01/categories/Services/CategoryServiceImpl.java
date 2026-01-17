@@ -4,12 +4,16 @@ import ec.edu.ups.icc.fundamentos01.categories.entity.CreateCategoryDto;
 import ec.edu.ups.icc.fundamentos01.categories.entity.UpdateCategoryDto;
 import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryResponseDto;
-import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
-import ec.edu.ups.icc.fundamentos01.categories.mappers.CategoryMapper;
 import ec.edu.ups.icc.fundamentos01.categories.models.Category;
+import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.exception.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.exception.domain.NotFoundException;
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
+import ec.edu.ups.icc.fundamentos01.products.mappers.ProductMapper;
+import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,12 +21,15 @@ import java.util.List;
  * Implementación del servicio para operaciones de Category
  */
 @Service
+@Transactional
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepo;
+    private final ProductRepository productRepo;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepo) {
+    public CategoryServiceImpl(CategoryRepository categoryRepo, ProductRepository productRepo) {
         this.categoryRepo = categoryRepo;
+        this.productRepo = productRepo;
     }
 
     @Override
@@ -30,7 +37,7 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepo.findAll()
                 .stream()
                 .map(Category::fromEntity)
-                .map(CategoryMapper::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -38,7 +45,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponseDto findOne(Long id) {
         return categoryRepo.findById(id)
                 .map(Category::fromEntity)
-                .map(CategoryMapper::toResponse)
+                .map(this::toResponse)
                 .orElseThrow(() -> new NotFoundException("Categoría no encontrada con ID: " + id));
     }
 
@@ -58,7 +65,7 @@ public class CategoryServiceImpl implements CategoryService {
         CategoryEntity saved = categoryRepo.save(entity);
 
         // Retornar DTO de respuesta
-        return CategoryMapper.toResponse(Category.fromEntity(saved));
+        return toResponse(Category.fromEntity(saved));
     }
 
     @Override
@@ -82,7 +89,7 @@ public class CategoryServiceImpl implements CategoryService {
         updated.setId(id); // Mantener el ID
         CategoryEntity saved = categoryRepo.save(updated);
 
-        return CategoryMapper.toResponse(Category.fromEntity(saved));
+        return toResponse(Category.fromEntity(saved));
     }
 
     @Override
@@ -94,4 +101,34 @@ public class CategoryServiceImpl implements CategoryService {
         // Eliminación física
         categoryRepo.delete(category);
     }
+
+    @Override
+    public Long countProductsByCategoryId(Long categoryId) {
+        // Verificar que la categoría existe
+        CategoryEntity category = categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Categoría no encontrada con ID: " + categoryId));
+
+        // Retornar el conteo de productos asociados
+        return (long) category.getProducts().size();
+    }
+
+    @Override
+    public List<ProductResponseDto> getProductsByCategoryId(Long categoryId) {
+        categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Categoria no encontrada con ID: " + categoryId));
+
+        return productRepo.findByCategoriesId(categoryId)
+                .stream()
+                .map(ProductMapper::toResponse)
+                .toList();
+    }
+
+    private CategoryResponseDto toResponse(Category category) {
+        CategoryResponseDto dto = new CategoryResponseDto();
+        dto.id = category.getId();
+        dto.name = category.getName();
+        dto.description = category.getDescription();
+        return dto;
+    }
+
 }

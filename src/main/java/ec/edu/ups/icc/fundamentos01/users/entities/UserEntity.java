@@ -1,6 +1,10 @@
 package ec.edu.ups.icc.fundamentos01.users.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ec.edu.ups.icc.fundamentos01.core.entities.BaseModel;
+import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
 import jakarta.persistence.*;
 
 @Entity
@@ -15,6 +19,9 @@ public class UserEntity extends BaseModel {
 
     @Column(nullable = false)
     private String password;
+
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private List<ProductEntity> products = new ArrayList<>();
 
     // Getters y Setters
     public String getName() {
@@ -39,5 +46,13 @@ public class UserEntity extends BaseModel {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<ProductEntity> getProducts() {
+        return products;
+    }
+
+    public void setProducts(List<ProductEntity> products) {
+        this.products = products != null ? products : new ArrayList<>();
     }
 }

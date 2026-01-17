@@ -2,6 +2,7 @@ package ec.edu.ups.icc.fundamentos01.users.services;
 
 import java.util.List;
 
+import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UpdateUserDto;
@@ -20,4 +21,6 @@ public interface UserService {
     UserResponseDto partialUpdate(int id, PartialUpdateUserDto dto);
 
     void delete(int id);
+
+    List<ProductResponseDto> getProductsByUserId(Long userId);
 }
