@@ -23,4 +23,7 @@ public interface UserService {
     void delete(int id);
 
     List<ProductResponseDto> getProductsByUserId(Long userId);
+
+    List<ProductResponseDto> getProductsByUserIdWithFilters(Long id, String name, Double minPrice, Double maxPrice,
+            Long categoryId);
 }
