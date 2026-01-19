@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.mappers.ProductMapper;
+import ec.edu.ups.icc.fundamentos01.products.models.Product;
 import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
 import ec.edu.ups.icc.fundamentos01.users.dtos.CreateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.PartialUpdateUserDto;
@@ -113,6 +114,19 @@ public class UserServiceImpl implements UserService {
 
         return productRepo.findByOwnerId(userId)
                 .stream()
+                .map(Product::fromEntity)
+                .map(ProductMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ProductResponseDto> getProductsByUserIdWithFilters(Long id, String name, Double minPrice, Double maxPrice,
+            Long categoryId) {
+        userRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + id));
+        return productRepo.findByOwnerIdWithFilters(id, name, minPrice, maxPrice, categoryId)
+                .stream()
+                .map(Product::fromEntity)
                 .map(ProductMapper::toResponse)
                 .toList();
     }

@@ -19,6 +19,8 @@ import ec.edu.ups.icc.fundamentos01.users.dtos.UpdateUserDto;
 import ec.edu.ups.icc.fundamentos01.users.dtos.UserResponseDto;
 import ec.edu.ups.icc.fundamentos01.users.services.UserService;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/users")
@@ -65,4 +67,21 @@ public class UsersController {
     public List<ProductResponseDto> findProductsByUserId(@PathVariable("id") Long id) {
         return service.getProductsByUserId(id);
     }
+
+    @GetMapping("/{id}/products-v2")
+    public List<ProductResponseDto> findProductsByUserIdWithFilters(
+            @PathVariable("id") Long id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Long categoryId) {
+        return service.getProductsByUserIdWithFilters(id, name, minPrice, maxPrice, categoryId);
+    }
+    
+
+
+
+
+
+
 }

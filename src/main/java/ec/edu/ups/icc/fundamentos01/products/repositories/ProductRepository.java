@@ -1,9 +1,12 @@
 package ec.edu.ups.icc.fundamentos01.products.repositories;
 
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
+import ec.edu.ups.icc.fundamentos01.users.dtos.UserResponseDto;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +30,9 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     List<ProductEntity> findByCategoriesName(String name);
 
     List<ProductEntity> findByCategoriesIdAndPriceGreaterThan(Long categoryId, Double price);
+
+    List<ProductEntity> findByOwnerIdWithFilters(Long id, String name, Double minPrice, Double maxPrice,
+            Long categoryId);
 
 
 }
