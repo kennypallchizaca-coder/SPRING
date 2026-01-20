@@ -11,11 +11,18 @@ spring:
   # Configuración JPA/Hibernate
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         '[format_sql]': true  # Formatea SQL en los logs
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    ec.edu.ups.icc.fundamentos01: DEBUG
 
 server:
   port: 8080
