@@ -1,15 +1,22 @@
 package ec.edu.ups.icc.fundamentos01.products.services;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryResponseDto;
 import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
+import ec.edu.ups.icc.fundamentos01.exception.domain.BadRequestException;
 import ec.edu.ups.icc.fundamentos01.exception.domain.NotFoundException;
 import ec.edu.ups.icc.fundamentos01.exception.domain.ConflictException;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
@@ -23,6 +30,20 @@ import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 
 @Service
 public class ProductServiceImpl implements ProductService {
+
+    private static final int MIN_PAGE_SIZE = 1;
+    private static final int MAX_PAGE_SIZE = 100;
+
+    private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
+            "id",
+            "name",
+            "price",
+            "stock",
+            "createdAt",
+            "updatedAt",
+            "owner.name",
+            "owner.email",
+            "categories.name");
 
     private final ProductRepository productRepo;
     private final UserRepository userRepo;
@@ -50,11 +71,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductResponseDto> findAll() {
-        return productRepo.findAll()
-                .stream()
-                .map(this::toResponseDto)
-                .toList();
+    public Page<ProductResponseDto> findAll(int page, int size, String[] sort) {
+        Pageable pageable = createPageable(page, size, sort);
+        return productRepo.findAll(pageable).map(this::toResponseDto);
     }
 
     @Override
@@ -186,15 +205,28 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductResponseDto> findByUserId(Long userId) {
-        // Verificar que el usuario existe
+    public Slice<ProductResponseDto> findAllSlice(int page, int size, String[] sort) {
+        Pageable pageable = createPageable(page, size, sort);
+        return productRepo.findAllBy(pageable).map(this::toResponseDto);
+    }
+
+    @Override
+    public Page<ProductResponseDto> findWithFilters(String name, Double minPrice, Double maxPrice, Long categoryId,
+            int page, int size, String[] sort) {
+        validateFilterParameters(minPrice, maxPrice);
+        Pageable pageable = createPageable(page, size, sort);
+        return productRepo.findWithFilters(name, minPrice, maxPrice, categoryId, pageable).map(this::toResponseDto);
+    }
+
+    @Override
+    public Page<ProductResponseDto> findByUserIdWithFilters(Long userId, String name, Double minPrice, Double maxPrice,
+            Long categoryId, int page, int size, String[] sort) {
         userRepo.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
-
-        return productRepo.findByOwnerId(userId)
-                .stream()
-                .map(this::toResponseDto)
-                .toList();
+        validateFilterParameters(minPrice, maxPrice);
+        Pageable pageable = createPageable(page, size, sort);
+        return productRepo.findByOwnerIdWithFilters(userId, name, minPrice, maxPrice, categoryId, pageable)
+                .map(this::toResponseDto);
     }
 
     @Override
@@ -205,6 +237,54 @@ public class ProductServiceImpl implements ProductService {
                 .stream()
                 .map(this::toResponseDto)
                 .toList();
+    }
+
+    private Pageable createPageable(int page, int size, String[] sort) {
+        if (page < 0) {
+            throw new BadRequestException("La página debe ser mayor o igual a 0");
+        }
+        if (size < MIN_PAGE_SIZE || size > MAX_PAGE_SIZE) {
+            throw new BadRequestException(
+                    "El tamaño debe estar entre " + MIN_PAGE_SIZE + " y " + MAX_PAGE_SIZE);
+        }
+        Sort sortDefinition = createSort(sort);
+        return PageRequest.of(page, size, sortDefinition);
+    }
+
+    private Sort createSort(String[] sortParams) {
+        if (sortParams == null || sortParams.length == 0) {
+            return Sort.by("id");
+        }
+
+        List<Sort.Order> orders = new ArrayList<>();
+        for (String sortParam : sortParams) {
+            String[] parts = sortParam.split(",");
+            String property = parts[0].trim();
+            String direction = parts.length > 1 ? parts[1].trim() : "asc";
+
+            if (!ALLOWED_SORT_PROPERTIES.contains(property)) {
+                throw new BadRequestException("Propiedad de ordenamiento no válida: " + property);
+            }
+
+            Sort.Order order = "desc".equalsIgnoreCase(direction)
+                    ? Sort.Order.desc(property)
+                    : Sort.Order.asc(property);
+            orders.add(order);
+        }
+
+        return Sort.by(orders);
+    }
+
+    private void validateFilterParameters(Double minPrice, Double maxPrice) {
+        if (minPrice != null && minPrice < 0) {
+            throw new BadRequestException("El precio mínimo no puede ser negativo");
+        }
+        if (maxPrice != null && maxPrice < 0) {
+            throw new BadRequestException("El precio máximo no puede ser negativo");
+        }
+        if (minPrice != null && maxPrice != null && maxPrice < minPrice) {
+            throw new BadRequestException("El precio máximo debe ser mayor o igual al precio mínimo");
+        }
     }
 
 }
