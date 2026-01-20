@@ -2,6 +2,8 @@ package ec.edu.ups.icc.fundamentos01.products.controllers;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
@@ -33,8 +36,31 @@ public class ProductsController {
     }
 
     @GetMapping
-    public List<ProductResponseDto> findAll() {
-        return service.findAll();
+    public ResponseEntity<Page<ProductResponseDto>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String[] sort) {
+        return ResponseEntity.ok(service.findAll(page, size, sort));
+    }
+
+    @GetMapping("/slice")
+    public ResponseEntity<Slice<ProductResponseDto>> findAllSlice(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String[] sort) {
+        return ResponseEntity.ok(service.findAllSlice(page, size, sort));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<ProductResponseDto>> findWithFilters(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String[] sort) {
+        return ResponseEntity.ok(service.findWithFilters(name, minPrice, maxPrice, categoryId, page, size, sort));
     }
 
     @GetMapping("/{id}")
@@ -71,8 +97,17 @@ public class ProductsController {
     }
 
     @GetMapping("/user/{userId}")
-    public List<ProductResponseDto> findByUserId(@PathVariable("userId") Long userId) {
-        return service.findByUserId(userId);
+    public ResponseEntity<Page<ProductResponseDto>> findByUserId(
+            @PathVariable("userId") Long userId,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String[] sort) {
+        return ResponseEntity.ok(
+                service.findByUserIdWithFilters(userId, name, minPrice, maxPrice, categoryId, page, size, sort));
     }
 
     @GetMapping("/category/{categoryId}")
