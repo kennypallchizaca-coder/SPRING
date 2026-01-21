@@ -10,9 +10,9 @@
 ### **Información del Proyecto**
 
 **Universidad Politécnica Salesiana**  
-**Carrera:** Ingeniería en Ciencias de la Computación  
+**Carrera:** Computación  
 **Asignatura:** Programación y Plataformas Web  
----
+
 
 ## **Tabla de Contenidos**
 
