@@ -1,9 +1,9 @@
 package ec.edu.ups.icc.fundamentos01.products.services;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.ArrayList;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,9 +17,9 @@ import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryEntity;
 import ec.edu.ups.icc.fundamentos01.categories.entity.CategoryResponseDto;
 import ec.edu.ups.icc.fundamentos01.categories.repositories.CategoryRepository;
 import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
+import ec.edu.ups.icc.fundamentos01.exception.domain.BadRequestException;
 import ec.edu.ups.icc.fundamentos01.exception.domain.NotFoundException;
 import ec.edu.ups.icc.fundamentos01.exception.domain.ConflictException;
-import ec.edu.ups.icc.fundamentos01.exception.domain.BadRequestException;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
@@ -31,6 +31,20 @@ import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 
 @Service
 public class ProductServiceImpl implements ProductService {
+
+    private static final int MIN_PAGE_SIZE = 1;
+    private static final int MAX_PAGE_SIZE = 100;
+
+    private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
+            "id",
+            "name",
+            "price",
+            "stock",
+            "createdAt",
+            "updatedAt",
+            "owner.name",
+            "owner.email",
+            "categories.name");
 
     private final ProductRepository productRepo;
     private final UserRepository userRepo;
@@ -57,6 +71,8 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new NotFoundException("Categoría no encontrada con ID: " + categoryId));
     }
 
+    // ============== MÉTODOS BÁSICOS ==============
+
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDto> findAll() {
@@ -73,6 +89,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
         return toResponseDto(entity);
     }
+
     @Override
     public ProductResponseDto create(CreateProductDto dto) {
         if (productRepo.findByName(dto.name).isPresent()) {
@@ -91,42 +108,6 @@ public class ProductServiceImpl implements ProductService {
         ProductEntity saved = productRepo.save(entity);
 
         return toResponseDto(saved);
-
-    }
-
-    private ProductResponseDto toResponseDto(ProductEntity entity) {
-        ProductResponseDto dto = new ProductResponseDto();
-
-        // Campos básicos
-        dto.id = entity.getId();
-        dto.name = entity.getName();
-        dto.description = entity.getDescription();
-        dto.price = entity.getPrice();
-        dto.stock = entity.getStock();
-
-        ProductResponseDto.UserSummaryDto userDto = new ProductResponseDto.UserSummaryDto();
-        userDto.id = entity.getOwner().getId();
-        userDto.name = entity.getOwner().getName();
-        userDto.email = entity.getOwner().getEmail();
-        dto.user = userDto;
-
-        dto.categories = entity.getCategories().stream()
-                .map(this::toCategoryResponseDto)
-                .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
-                .toList();
-
-        dto.createdAt = entity.getCreatedAt();
-        dto.updatedAt = entity.getUpdatedAt();
-
-        return dto;
-    }
-
-    private CategoryResponseDto toCategoryResponseDto(CategoryEntity category) {
-        CategoryResponseDto dto = new CategoryResponseDto();
-        dto.id = category.getId();
-        dto.name = category.getName();
-        dto.description = category.getDescription();
-        return dto;
     }
 
     @Override
@@ -198,10 +179,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseDto> findByUserId(Long userId) {
-        // Verificar que el usuario existe
         userRepo.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
-
         return productRepo.findByOwnerId(userId)
                 .stream()
                 .map(this::toResponseDto)
@@ -225,18 +204,14 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductResponseDto> findAll(int page, int size, String[] sort) {
         Pageable pageable = createPageable(page, size, sort);
-        Page<ProductEntity> productPage = productRepo.findAllWithRelations(pageable);
-        
-        return productPage.map(this::toResponseDto);
+        return productRepo.findAll(pageable).map(this::toResponseDto);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Slice<ProductResponseDto> findAllSlice(int page, int size, String[] sort) {
         Pageable pageable = createPageable(page, size, sort);
-        Slice<ProductEntity> productSlice = productRepo.findAllSliceWithRelations(pageable);
-        
-        return productSlice.map(this::toResponseDto);
+        return productRepo.findAllBy(pageable).map(this::toResponseDto);
     }
 
     @Override
@@ -244,18 +219,11 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductResponseDto> findWithFilters(
             String name, Double minPrice, Double maxPrice, Long categoryId,
             int page, int size, String[] sort) {
-        
-        // Validaciones de filtros
+
         validateFilterParameters(minPrice, maxPrice);
-        
-        // Crear Pageable
         Pageable pageable = createPageable(page, size, sort);
-        
-        // Consulta con filtros y paginación
-        Page<ProductEntity> productPage = productRepo.findWithFilters(
-            name, minPrice, maxPrice, categoryId, pageable);
-        
-        return productPage.map(this::toResponseDto);
+        return productRepo.findWithFilters(name, minPrice, maxPrice, categoryId, pageable)
+                .map(this::toResponseDto);
     }
 
     @Override
@@ -263,102 +231,116 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductResponseDto> findByUserIdWithFilters(
             Long userId, String name, Double minPrice, Double maxPrice, Long categoryId,
             int page, int size, String[] sort) {
-        
-        // 1. Validar que el usuario existe
-        if (!userRepo.existsById(userId)) {
-            throw new NotFoundException("Usuario no encontrado con ID: " + userId);
-        }
-        
-        // 2. Validar filtros
+
+        userRepo.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + userId));
         validateFilterParameters(minPrice, maxPrice);
-        
-        // 3. Crear Pageable
         Pageable pageable = createPageable(page, size, sort);
-        
-        // 4. Consulta con filtros y paginación
-        Page<ProductEntity> productPage = productRepo.findByOwnerIdWithFiltersPaginated(
-            userId, name, minPrice, maxPrice, categoryId, pageable);
-        
-        return productPage.map(this::toResponseDto);
+        return productRepo.findByUserIdWithFilters(userId, name, minPrice, maxPrice, categoryId, pageable)
+                .map(this::toResponseDto);
     }
 
     // ============== MÉTODOS HELPER ==============
 
     private Pageable createPageable(int page, int size, String[] sort) {
-        // Validar parámetros
         if (page < 0) {
             throw new BadRequestException("La página debe ser mayor o igual a 0");
         }
-        if (size < 1 || size > 100) {
-            throw new BadRequestException("El tamaño debe estar entre 1 y 100");
+        if (size < MIN_PAGE_SIZE || size > MAX_PAGE_SIZE) {
+            throw new BadRequestException(
+                    "El tamaño debe estar entre " + MIN_PAGE_SIZE + " y " + MAX_PAGE_SIZE);
         }
-        
-        // Crear Sort
-        Sort sortObj = createSort(sort);
-        
-        return PageRequest.of(page, size, sortObj);
+        Sort sortDefinition = createSort(sort);
+        return PageRequest.of(page, size, sortDefinition);
     }
 
-    private Sort createSort(String[] sort) {
-        if (sort == null || sort.length == 0) {
+    private Sort createSort(String[] sortParams) {
+        if (sortParams == null || sortParams.length == 0) {
             return Sort.by("id");
         }
 
         List<Sort.Order> orders = new ArrayList<>();
-        for (String sortParam : sort) {
-            String[] parts = sortParam.split(",");
-            String rawProperty = parts[0].trim();
-            String property = normalizeSortProperty(rawProperty);
-            String direction = parts.length > 1 ? parts[1].trim() : "asc";
-            
-            // Validar propiedades permitidas para evitar inyección SQL
-            if (!isValidSortProperty(property)) {
+
+        // Si tenemos exactamente 2 elementos y el segundo es "asc" o "desc",
+        // probablemente Spring dividió "price,desc" en ["price", "desc"]
+        if (sortParams.length == 2 &&
+                (sortParams[1].equalsIgnoreCase("asc") || sortParams[1].equalsIgnoreCase("desc"))) {
+            String property = sortParams[0].trim();
+            String direction = sortParams[1].trim();
+
+            if (!ALLOWED_SORT_PROPERTIES.contains(property)) {
                 throw new BadRequestException("Propiedad de ordenamiento no válida: " + property);
             }
-            
-            Sort.Order order = "desc".equalsIgnoreCase(direction) 
-                ? Sort.Order.desc(property)
-                : Sort.Order.asc(property);
-            
+
+            Sort.Order order = "desc".equalsIgnoreCase(direction)
+                    ? Sort.Order.desc(property)
+                    : Sort.Order.asc(property);
             orders.add(order);
+        } else {
+            // Procesar cada parámetro normalmente
+            for (String sortParam : sortParams) {
+                String[] parts = sortParam.split(",");
+                String property = parts[0].trim();
+                String direction = parts.length > 1 ? parts[1].trim() : "asc";
+
+                if (!ALLOWED_SORT_PROPERTIES.contains(property)) {
+                    throw new BadRequestException("Propiedad de ordenamiento no válida: " + property);
+                }
+
+                Sort.Order order = "desc".equalsIgnoreCase(direction)
+                        ? Sort.Order.desc(property)
+                        : Sort.Order.asc(property);
+                orders.add(order);
+            }
         }
-        
+
         return Sort.by(orders);
-    }
-
-    private boolean isValidSortProperty(String property) {
-        // Lista blanca de propiedades permitidas para ordenamiento
-        Set<String> allowedProperties = Set.of(
-            "id", "name", "price", "stock", "createdAt", "updatedAt",
-            "owner.name", "owner.email", "categories.name"
-        );
-        return allowedProperties.contains(property);
-    }
-
-    private String normalizeSortProperty(String property) {
-        if (property == null) {
-            return null;
-        }
-        if ("category.name".equals(property)) {
-            return "categories.name";
-        }
-        return property;
     }
 
     private void validateFilterParameters(Double minPrice, Double maxPrice) {
         if (minPrice != null && minPrice < 0) {
             throw new BadRequestException("El precio mínimo no puede ser negativo");
         }
-        
         if (maxPrice != null && maxPrice < 0) {
             throw new BadRequestException("El precio máximo no puede ser negativo");
         }
-        
         if (minPrice != null && maxPrice != null && maxPrice < minPrice) {
             throw new BadRequestException("El precio máximo debe ser mayor o igual al precio mínimo");
         }
     }
 
+    private ProductResponseDto toResponseDto(ProductEntity entity) {
+        ProductResponseDto dto = new ProductResponseDto();
 
+        // Campos básicos
+        dto.id = entity.getId();
+        dto.name = entity.getName();
+        dto.description = entity.getDescription();
+        dto.price = entity.getPrice();
+        dto.stock = entity.getStock();
 
+        ProductResponseDto.UserSummaryDto userDto = new ProductResponseDto.UserSummaryDto();
+        userDto.id = entity.getOwner().getId();
+        userDto.name = entity.getOwner().getName();
+        userDto.email = entity.getOwner().getEmail();
+        dto.user = userDto;
+
+        dto.categories = entity.getCategories().stream()
+                .map(this::toCategoryResponseDto)
+                .sorted((left, right) -> left.name.compareToIgnoreCase(right.name))
+                .toList();
+
+        dto.createdAt = entity.getCreatedAt();
+        dto.updatedAt = entity.getUpdatedAt();
+
+        return dto;
+    }
+
+    private CategoryResponseDto toCategoryResponseDto(CategoryEntity category) {
+        CategoryResponseDto dto = new CategoryResponseDto();
+        dto.id = category.getId();
+        dto.name = category.getName();
+        dto.description = category.getDescription();
+        return dto;
+    }
 }

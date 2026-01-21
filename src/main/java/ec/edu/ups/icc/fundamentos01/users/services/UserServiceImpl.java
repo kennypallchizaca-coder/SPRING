@@ -120,14 +120,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<ProductResponseDto> getProductsByUserIdWithFilters(Long id, String name, Double minPrice, Double maxPrice,
+    public List<ProductResponseDto> getProductsByUserIdWithFilters(Long id, String name, Double minPrice,
+            Double maxPrice,
             Long categoryId) {
         userRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + id));
-        return productRepo.findByOwnerIdWithFilters(id, name, minPrice, maxPrice, categoryId)
+
+        // Obtener todos los productos del usuario
+        List<ProductResponseDto> products = productRepo.findByOwnerId(id)
                 .stream()
                 .map(Product::fromEntity)
                 .map(ProductMapper::toResponse)
+                .toList();
+
+        // Aplicar filtros manualmente
+        return products.stream()
+                .filter(p -> name == null || p.name.toLowerCase().contains(name.toLowerCase()))
+                .filter(p -> minPrice == null || p.price >= minPrice)
+                .filter(p -> maxPrice == null || p.price <= maxPrice)
+                .filter(p -> categoryId == null || p.categories.stream().anyMatch(c -> c.id.equals(categoryId)))
                 .toList();
     }
 }

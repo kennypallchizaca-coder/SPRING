@@ -13,6 +13,7 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
 public interface ProductService {
 
     // ============== MÉTODOS BÁSICOS EXISTENTES ==============
+
     ProductResponseDto findOne(int id);
 
     ProductResponseDto create(CreateProductDto dto);
@@ -47,26 +48,24 @@ public interface ProductService {
      * Busca productos con filtros y paginación
      */
     Page<ProductResponseDto> findWithFilters(
-        String name, 
-        Double minPrice, 
-        Double maxPrice, 
-        Long categoryId,
-        int page, 
-        int size, 
-        String[] sort
-    );
+            String name,
+            Double minPrice,
+            Double maxPrice,
+            Long categoryId,
+            int page,
+            int size,
+            String[] sort);
 
     /**
      * Productos de un usuario con filtros y paginación
      */
     Page<ProductResponseDto> findByUserIdWithFilters(
-        Long userId,
-        String name,
-        Double minPrice,
-        Double maxPrice,
-        Long categoryId,
-        int page,
-        int size,
-        String[] sort
-    );
+            Long userId,
+            String name,
+            Double minPrice,
+            Double maxPrice,
+            Long categoryId,
+            int page,
+            int size,
+            String[] sort);
 }

@@ -27,12 +27,12 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/products")
-public class ProductsController {
+public class ProductController {
 
-    private final ProductService service;
+    private final ProductService productService;
 
-    public ProductsController(ProductService service) {
-        this.service = service;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
     // ============== PAGINACIÓN BÁSICA ==============
@@ -41,13 +41,13 @@ public class ProductsController {
      * Lista todos los productos con paginación básica
      * Ejemplo: GET /api/products?page=0&size=10&sort=name,asc
      */
-    @GetMapping({ "", "/paginated" })
-    public ResponseEntity<Page<ProductResponseDto>> findAllPaginated(
+    @GetMapping
+    public ResponseEntity<Page<ProductResponseDto>> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String[] sort) {
 
-        Page<ProductResponseDto> products = service.findAll(page, size, sort);
+        Page<ProductResponseDto> products = productService.findAll(page, size, sort);
         return ResponseEntity.ok(products);
     }
 
@@ -63,11 +63,11 @@ public class ProductsController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String[] sort) {
 
-        Slice<ProductResponseDto> products = service.findAllSlice(page, size, sort);
+        Slice<ProductResponseDto> products = productService.findAllSlice(page, size, sort);
         return ResponseEntity.ok(products);
     }
 
-    // ============== PAGINACIÓN CON FILTROS ==============
+    // ============== PAGINACIÓN CON FILTROS (CONTINUANDO TEMA 09) ==============
 
     /**
      * Lista productos con filtros y paginación
@@ -83,9 +83,9 @@ public class ProductsController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String[] sort) {
 
-        Page<ProductResponseDto> products = service.findWithFilters(
-            name, minPrice, maxPrice, categoryId, page, size, sort);
-        
+        Page<ProductResponseDto> products = productService.findWithFilters(
+                name, minPrice, maxPrice, categoryId, page, size, sort);
+
         return ResponseEntity.ok(products);
     }
 
@@ -95,8 +95,8 @@ public class ProductsController {
      * Productos de un usuario específico con paginación
      * Ejemplo: GET /api/products/user/1?page=0&size=5&sort=price,desc
      */
-    @GetMapping({ "/user/{userId}", "/user/{userId}/paginated" })
-    public ResponseEntity<Page<ProductResponseDto>> findByUserIdPaginated(
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Page<ProductResponseDto>> findByUserId(
             @PathVariable Long userId,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Double minPrice,
@@ -106,59 +106,60 @@ public class ProductsController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String[] sort) {
 
-        Page<ProductResponseDto> products = service.findByUserIdWithFilters(
-            userId, name, minPrice, maxPrice, categoryId, page, size, sort);
-        
+        Page<ProductResponseDto> products = productService.findByUserIdWithFilters(
+                userId, name, minPrice, maxPrice, categoryId, page, size, sort);
+
         return ResponseEntity.ok(products);
     }
 
-    // ============== ENDPOINTS BÁSICOS EXISTENTES ==============
+    // ============== OTROS ENDPOINTS EXISTENTES ==============
 
     @GetMapping("/all")
-    public List<ProductResponseDto> findAll() {
-        return service.findAll();
+    public List<ProductResponseDto> findAllList() {
+        return productService.findAll();
     }
 
     @GetMapping("/{id}")
     public ProductResponseDto findOne(@PathVariable("id") int id) {
-        return service.findOne(id);
+        return productService.findOne(id);
     }
 
     @PostMapping
     public ResponseEntity<ProductResponseDto> create(@Valid @RequestBody CreateProductDto dto) {
-        ProductResponseDto created = service.create(dto);
+        ProductResponseDto created = productService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
     public ProductResponseDto update(@PathVariable("id") int id, @Valid @RequestBody UpdateProductDto dto) {
-        return service.update(id, dto);
+        return productService.update(id, dto);
     }
 
     @PatchMapping("/{id}")
-    public ProductResponseDto partialUpdate(@PathVariable("id") int id, @Valid @RequestBody PartialUpdateProductDto dto) {
-        return service.partialUpdate(id, dto);
+    public ProductResponseDto partialUpdate(@PathVariable("id") int id,
+            @Valid @RequestBody PartialUpdateProductDto dto) {
+        return productService.partialUpdate(id, dto);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") int id) {
-        service.delete(id);
+        productService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/validate-name")
     public ResponseEntity<Boolean> validateProductName(@Valid @RequestBody ValidateProductNameDto dto) {
-        service.validateProductName(dto.name, dto.id);
+        productService.validateProductName(dto.name, dto.id);
         return ResponseEntity.ok().body(true);
     }
 
     @GetMapping("/user/{userId}/all")
-    public List<ProductResponseDto> findByUserId(@PathVariable("userId") Long userId) {
-        return service.findByUserId(userId);
+    public List<ProductResponseDto> findByUserIdList(@PathVariable("userId") Long userId) {
+        return productService.findByUserId(userId);
     }
 
     @GetMapping("/category/{categoryId}")
     public List<ProductResponseDto> findByCategoryId(@PathVariable("categoryId") Long categoryId) {
-        return service.findByCategoryId(categoryId);
+        return productService.findByCategoryId(categoryId);
     }
 }
