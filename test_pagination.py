@@ -48,8 +48,10 @@ def delete_all_products():
     
     try:
         response = requests.get(f"{BASE_URL}/products/all")
+        print_info(f"GET {BASE_URL}/products/all - Status: {response.status_code}")
         if response.status_code == 200:
             products = response.json()
+            print_info(f"Respuesta: {type(products)} - Longitud: {len(products) if hasattr(products, '__len__') else 'N/A'}")
             if products:
                 print_info(f"Encontrados {len(products)} productos para eliminar")
                 deleted_count = 0
@@ -67,8 +69,10 @@ def delete_all_products():
                 print_success(f"Total productos eliminados: {deleted_count}/{len(products)}")
             else:
                 print_info("No hay productos para eliminar")
+        else:
+            print_error(f"Error en GET /products/all: {response.status_code} - {response.text}")
     except Exception as e:
-        print_error(f"Error al intentar eliminar productos: {str(e)}")
+        print_error(f"Excepción al intentar eliminar productos: {str(e)}")
 
 def delete_all_users():
     """Elimina todos los usuarios existentes"""
@@ -417,6 +421,9 @@ def create_products(count=1000, user_ids=[], category_ids={}):
     print_info(f"Generando {count} productos con datos coherentes...")
     start_time = time.time()
     
+    # Usar un set para rastrear nombres únicos
+    used_names = set()
+    
     # Distribuir productos entre categorías
     category_names = list(CATEGORY_PRODUCTS.keys())
     products_per_category = count // len(category_names)
@@ -436,9 +443,17 @@ def create_products(count=1000, user_ids=[], category_ids={}):
             product_type, variants, min_price, max_price = random.choice(products_list)
             variant = random.choice(variants)
             
-            # Generar nombre descriptivo
+            # Generar nombre descriptivo único
             brand = fake.company().split()[0]  # Usar primera palabra como marca
-            name = f"{product_type} {variant} {brand}"
+            base_name = f"{product_type} {variant} {brand}"
+            
+            # Asegurar unicidad agregando sufijo si es necesario
+            name = base_name
+            counter = 1
+            while name in used_names:
+                name = f"{base_name} {counter}"
+                counter += 1
+            used_names.add(name)
             
             # Generar descripción realista
             description = f"{name}. {random.choice(descriptions_pool)}. "

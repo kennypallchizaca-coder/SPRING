@@ -28,6 +28,7 @@ import ec.edu.ups.icc.fundamentos01.products.models.Product;
 import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
 import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
 import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
+import org.hibernate.Hibernate;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -310,6 +311,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductResponseDto toResponseDto(ProductEntity entity) {
+        // Inicializar relaciones lazy
+        Hibernate.initialize(entity.getOwner());
+        Hibernate.initialize(entity.getCategories());
+
         ProductResponseDto dto = new ProductResponseDto();
 
         // Campos básicos
