@@ -12,9 +12,6 @@
 **Universidad Politécnica Salesiana**  
 **Carrera:** Ingeniería en Ciencias de la Computación  
 **Asignatura:** Programación y Plataformas Web  
-**Estudiante:** Kenny Pallchizaca  
-**Fecha:** Enero 2026
-
 ---
 
 ## **Tabla de Contenidos**
@@ -457,25 +454,3 @@ Esta arquitectura de paginación proporciona:
 - **Documentación Spring**: [Spring Data JPA - Pagination](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#repositories.special-parameters)
 - **Script de pruebas**: `test_pagination.py` (incluido en el repositorio)
 
----
-
-**Desarrollado por:** Kenny Pallchizaca  
-**Institución:** Universidad Politécnica Salesiana  
-**Asignatura:** Programación y Plataformas Web  
-**Fecha:** Enero 2026
-
----
-
-## **Checklist de Verificación**
-
-- [x] Paginación básica implementada (Page)
-- [x] Paginación optimizada implementada (Slice)
-- [x] Filtros opcionales funcionando
-- [x] Ordenamiento simple y múltiple
-- [x] Validaciones completas
-- [x] Script de carga de datos (1000+ productos)
-- [x] Evidencias capturadas (screenshots)
-- [x] Performance Page vs Slice documentada
-- [x] README completo con ejemplos
-- [x] Código compilando sin errores
-- [x] Pruebas exitosas con 3,988 productos
