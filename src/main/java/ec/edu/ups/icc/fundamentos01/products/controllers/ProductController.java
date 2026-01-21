@@ -43,9 +43,9 @@ public class ProductController {
      */
     @GetMapping
     public ResponseEntity<Page<ProductResponseDto>> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String[] sort) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sort", defaultValue = "id") String[] sort) {
 
         Page<ProductResponseDto> products = productService.findAll(page, size, sort);
         return ResponseEntity.ok(products);
@@ -59,9 +59,9 @@ public class ProductController {
      */
     @GetMapping("/slice")
     public ResponseEntity<Slice<ProductResponseDto>> findAllSlice(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String[] sort) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sort", defaultValue = "id") String[] sort) {
 
         Slice<ProductResponseDto> products = productService.findAllSlice(page, size, sort);
         return ResponseEntity.ok(products);
@@ -75,13 +75,13 @@ public class ProductController {
      */
     @GetMapping("/search")
     public ResponseEntity<Page<ProductResponseDto>> findWithFilters(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String[] sort) {
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "minPrice", required = false) Double minPrice,
+            @RequestParam(name = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sort", defaultValue = "createdAt") String[] sort) {
 
         Page<ProductResponseDto> products = productService.findWithFilters(
                 name, minPrice, maxPrice, categoryId, page, size, sort);
@@ -97,14 +97,14 @@ public class ProductController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<Page<ProductResponseDto>> findByUserId(
-            @PathVariable Long userId,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String[] sort) {
+            @PathVariable("userId") Long userId,
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "minPrice", required = false) Double minPrice,
+            @RequestParam(name = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sort", defaultValue = "createdAt") String[] sort) {
 
         Page<ProductResponseDto> products = productService.findByUserIdWithFilters(
                 userId, name, minPrice, maxPrice, categoryId, page, size, sort);
@@ -120,7 +120,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ProductResponseDto findOne(@PathVariable("id") int id) {
+    public ProductResponseDto findOne(@PathVariable("id") Long id) {
         return productService.findOne(id);
     }
 
@@ -131,18 +131,18 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ProductResponseDto update(@PathVariable("id") int id, @Valid @RequestBody UpdateProductDto dto) {
+    public ProductResponseDto update(@PathVariable("id") Long id, @Valid @RequestBody UpdateProductDto dto) {
         return productService.update(id, dto);
     }
 
     @PatchMapping("/{id}")
-    public ProductResponseDto partialUpdate(@PathVariable("id") int id,
+    public ProductResponseDto partialUpdate(@PathVariable("id") Long id,
             @Valid @RequestBody PartialUpdateProductDto dto) {
         return productService.partialUpdate(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") int id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();
     }

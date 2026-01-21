@@ -85,8 +85,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProductResponseDto findOne(int id) {
-        ProductEntity entity = productRepo.findById((long) id)
+    public ProductResponseDto findOne(Long id) {
+        ProductEntity entity = productRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
         return toResponseDto(entity);
     }
@@ -112,14 +112,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponseDto update(int id, UpdateProductDto dto) {
+    public ProductResponseDto update(Long id, UpdateProductDto dto) {
         productRepo.findByName(dto.name).ifPresent(existing -> {
-            if (existing.getId() != id) {
+            if (!existing.getId().equals(id)) {
                 throw new ConflictException("Ya existe otro producto con el nombre: " + dto.name);
             }
         });
 
-        ProductEntity existingEntity = productRepo.findById((long) id)
+        ProductEntity existingEntity = productRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
         existingEntity.setName(dto.name);
@@ -136,8 +136,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponseDto partialUpdate(int id, PartialUpdateProductDto dto) {
-        ProductEntity existingEntity = productRepo.findById((long) id)
+    public ProductResponseDto partialUpdate(Long id, PartialUpdateProductDto dto) {
+        ProductEntity existingEntity = productRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
         if (dto.name != null) {
@@ -158,8 +158,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void delete(int id) {
-        productRepo.findById((long) id)
+    public void delete(Long id) {
+        productRepo.findById(id)
                 .ifPresentOrElse(
                         productRepo::delete,
                         () -> {

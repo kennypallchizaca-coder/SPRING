@@ -12,15 +12,15 @@ public interface UserService {
 
     List<UserResponseDto> findAll();
 
-    UserResponseDto findOne(int id);
+    UserResponseDto findOne(Long id);
 
     UserResponseDto create(CreateUserDto dto);
 
-    UserResponseDto update(int id, UpdateUserDto dto);
+    UserResponseDto update(Long id, UpdateUserDto dto);
 
-    UserResponseDto partialUpdate(int id, PartialUpdateUserDto dto);
+    UserResponseDto partialUpdate(Long id, PartialUpdateUserDto dto);
 
-    void delete(int id);
+    void delete(Long id);
 
     List<ProductResponseDto> getProductsByUserId(Long userId);
 

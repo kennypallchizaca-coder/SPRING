@@ -14,15 +14,15 @@ public interface ProductService {
 
     // ============== MÉTODOS BÁSICOS EXISTENTES ==============
 
-    ProductResponseDto findOne(int id);
+    ProductResponseDto findOne(Long id);
 
     ProductResponseDto create(CreateProductDto dto);
 
-    ProductResponseDto update(int id, UpdateProductDto dto);
+    ProductResponseDto update(Long id, UpdateProductDto dto);
 
-    ProductResponseDto partialUpdate(int id, PartialUpdateProductDto dto);
+    ProductResponseDto partialUpdate(Long id, PartialUpdateProductDto dto);
 
-    void delete(int id);
+    void delete(Long id);
 
     boolean validateProductName(String name, int id);
 

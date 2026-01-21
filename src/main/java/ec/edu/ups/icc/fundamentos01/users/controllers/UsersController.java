@@ -38,7 +38,7 @@ public class UsersController {
     }
 
     @GetMapping("/{id}")
-    public UserResponseDto findOne(@PathVariable("id") int id) {
+    public UserResponseDto findOne(@PathVariable("id") Long id) {
         return service.findOne(id);
     }
 
@@ -48,17 +48,17 @@ public class UsersController {
     }
 
     @PutMapping("/{id}")
-    public UserResponseDto update(@PathVariable("id") int id, @Valid @RequestBody UpdateUserDto dto) {
+    public UserResponseDto update(@PathVariable("id") Long id, @Valid @RequestBody UpdateUserDto dto) {
         return service.update(id, dto);
     }
 
     @PatchMapping("/{id}")
-    public UserResponseDto partialUpdate(@PathVariable("id") int id, @Valid @RequestBody PartialUpdateUserDto dto) {
+    public UserResponseDto partialUpdate(@PathVariable("id") Long id, @Valid @RequestBody PartialUpdateUserDto dto) {
         return service.partialUpdate(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable("id") int id) {
+    public void delete(@PathVariable("id") Long id) {
         service.delete(id);
     }
 

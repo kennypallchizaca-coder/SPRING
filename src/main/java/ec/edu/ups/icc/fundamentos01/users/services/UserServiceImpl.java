@@ -41,8 +41,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto findOne(int id) {
-        return userRepo.findById((long) id)
+    public UserResponseDto findOne(Long id) {
+        return userRepo.findById(id)
                 .map(User::fromEntity)
                 .map(UserMapper::toResponse)
                 .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
@@ -65,15 +65,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto update(int id, UpdateUserDto dto) {
+    public UserResponseDto update(Long id, UpdateUserDto dto) {
         // Validar email unico.
         userRepo.findByEmail(dto.email).ifPresent(existing -> {
-            if (existing.getId() != id) {
+            if (!existing.getId().equals(id)) {
                 throw new ConflictException("El email ya está registrado por otro usuario");
             }
         });
 
-        return userRepo.findById((long) id)
+        return userRepo.findById(id)
                 .map(User::fromEntity)
                 .map(user -> user.update(dto))
                 .map(User::toEntity)
@@ -84,8 +84,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto partialUpdate(int id, PartialUpdateUserDto dto) {
-        return userRepo.findById((long) id)
+    public UserResponseDto partialUpdate(Long id, PartialUpdateUserDto dto) {
+        return userRepo.findById(id)
                 .map(User::fromEntity)
                 .map(user -> user.partialUpdate(dto))
                 .map(User::toEntity)
@@ -96,9 +96,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(Long id) {
         // Elimina si existe.
-        userRepo.findById((long) id)
+        userRepo.findById(id)
                 .ifPresentOrElse(
                         userRepo::delete,
                         () -> {
