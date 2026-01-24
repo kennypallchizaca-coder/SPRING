@@ -448,7 +448,6 @@ Esta arquitectura de paginación proporciona:
 
 ---
 
-**Desarrollado por:** Kenny Pallchizaca  
 **Institución:** Universidad Politécnica Salesiana  
 **Asignatura:** Programación y Plataformas Web  
 **Fecha:** Enero 2026
@@ -468,3 +467,33 @@ Esta arquitectura de paginación proporciona:
 - [x] README completo con ejemplos
 - [x] Código compilando sin errores
 - [x] Pruebas exitosas con 3,988 productos
+
+
+
+## Consumo de la API (con capturas)
+
+Se evidencia el consumo de los endpoints: **Login**, **Register** y **GET /api/users (sin token)**.
+
+---
+
+### Login
+**Endpoint:** `POST /login`  
+**Captura:**  
+![alt text](docs/evidencias/login.png)
+---
+
+### Register
+**Endpoint:** `POST /register`  
+**Captura:**  
+![alt text](docs/evidencias/registrer.png)
+---
+
+### GET /api/users (SIN TOKEN)
+**Endpoint:** `GET /api/users`  
+**Autenticación:** No requiere token  
+**Captura:**  
+![alt text](docs/evidencias/token1.png)
+![alt text](docs/evidencias/token2.png)
+---
+
+
