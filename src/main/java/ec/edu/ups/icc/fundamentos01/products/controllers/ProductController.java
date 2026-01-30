@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -23,6 +25,7 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ValidateProductNameDto;
 import ec.edu.ups.icc.fundamentos01.products.services.ProductService;
+import ec.edu.ups.icc.fundamentos01.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
 
 @RestController
@@ -35,53 +38,84 @@ public class ProductController {
         this.productService = productService;
     }
 
-    // ============== PAGINACIÓN BÁSICA ==============
+    // ============== ENDPOINTS DE CREACIÓN ==============
 
     /**
-     * Lista todos los productos con paginación básica
-     * Ejemplo: GET /api/products?page=0&size=10&sort=name,asc
+     * Crear producto
+     * POST /api/products
+     * 
+     * Nota: Requiere autenticación por .anyRequest().authenticated()
+     * Se asigna al usuario actual como owner en el servicio
+     */
+    @PostMapping
+    public ResponseEntity<ProductResponseDto> create(@Valid @RequestBody CreateProductDto dto) {
+        ProductResponseDto created = productService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    // ============== ENDPOINTS DE CONSULTA ==============
+
+    /**
+     * Listar TODOS los productos (sin paginación) - SOLO ADMIN
+     * GET /api/products
+     * 
+     * Este endpoint muestra información sensible de todos los usuarios
+     * Por eso está protegido con @PreAuthorize
      */
     @GetMapping
-    public ResponseEntity<Page<ProductResponseDto>> findAll(
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size,
-            @RequestParam(name = "sort", defaultValue = "id") String[] sort) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ProductResponseDto>> findAll() {
+        List<ProductResponseDto> products = productService.findAll();
+        return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Listar productos con paginación básica
+     * GET /api/products/paginated?page=0&size=10&sort=name,asc
+     * 
+     * Nota: Requiere autenticación por .anyRequest().authenticated()
+     */
+    @GetMapping("/paginated")
+    public ResponseEntity<Page<ProductResponseDto>> findAllPaginado(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "sort", defaultValue = "id") String[] sort) {
 
         Page<ProductResponseDto> products = productService.findAll(page, size, sort);
         return ResponseEntity.ok(products);
     }
 
-    // ============== PAGINACIÓN CON SLICE (PERFORMANCE) ==============
-
     /**
-     * Lista productos usando Slice para mejor performance
-     * Ejemplo: GET /api/products/slice?page=0&size=10&sort=createdAt,desc
+     * Listar productos usando Slice para mejor performance
+     * GET /api/products/slice?page=0&size=10&sort=createdAt,desc
+     * 
+     * Nota: Requiere autenticación por .anyRequest().authenticated()
      */
     @GetMapping("/slice")
     public ResponseEntity<Slice<ProductResponseDto>> findAllSlice(
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size,
-            @RequestParam(name = "sort", defaultValue = "id") String[] sort) {
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "sort", defaultValue = "id") String[] sort) {
 
         Slice<ProductResponseDto> products = productService.findAllSlice(page, size, sort);
         return ResponseEntity.ok(products);
     }
 
-    // ============== PAGINACIÓN CON FILTROS (CONTINUANDO TEMA 09) ==============
-
     /**
-     * Lista productos con filtros y paginación
-     * Ejemplo: GET /api/products/search?name=laptop&minPrice=500&page=0&size=5
+     * Listar productos con filtros opcionales y paginación
+     * GET /api/products/search?name=laptop&minPrice=500&page=0&size=5
+     * 
+     * Nota: Requiere autenticación por .anyRequest().authenticated()
      */
     @GetMapping("/search")
     public ResponseEntity<Page<ProductResponseDto>> findWithFilters(
-            @RequestParam(name = "name", required = false) String name,
-            @RequestParam(name = "minPrice", required = false) Double minPrice,
-            @RequestParam(name = "maxPrice", required = false) Double maxPrice,
-            @RequestParam(name = "categoryId", required = false) Long categoryId,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size,
-            @RequestParam(name = "sort", defaultValue = "createdAt") String[] sort) {
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "minPrice", required = false) Double minPrice,
+            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "sort", defaultValue = "id") String[] sort) {
 
         Page<ProductResponseDto> products = productService.findWithFilters(
                 name, minPrice, maxPrice, categoryId, page, size, sort);
@@ -89,22 +123,34 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    // ============== USUARIOS CON SUS PRODUCTOS PAGINADOS ==============
+    /**
+     * Obtener producto por ID
+     * GET /api/products/{id}
+     * 
+     * Nota: Requiere autenticación por .anyRequest().authenticated()
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDto> findById(@PathVariable("id") String id) {
+        ProductResponseDto product = productService.findOne(Long.parseLong(id));
+        return ResponseEntity.ok(product);
+    }
 
     /**
-     * Productos de un usuario específico con paginación
-     * Ejemplo: GET /api/products/user/1?page=0&size=5&sort=price,desc
+     * Productos de un usuario específico con filtros opcionales y paginación
+     * GET /api/products/user/1?name=laptop&page=0&size=5&sort=price,desc
+     * 
+     * Nota: Requiere autenticación por .anyRequest().authenticated()
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<Page<ProductResponseDto>> findByUserId(
             @PathVariable("userId") Long userId,
-            @RequestParam(name = "name", required = false) String name,
-            @RequestParam(name = "minPrice", required = false) Double minPrice,
-            @RequestParam(name = "maxPrice", required = false) Double maxPrice,
-            @RequestParam(name = "categoryId", required = false) Long categoryId,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size,
-            @RequestParam(name = "sort", defaultValue = "createdAt") String[] sort) {
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "minPrice", required = false) Double minPrice,
+            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "sort", defaultValue = "id") String[] sort) {
 
         Page<ProductResponseDto> products = productService.findByUserIdWithFilters(
                 userId, name, minPrice, maxPrice, categoryId, page, size, sort);
@@ -112,39 +158,66 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    // ============== OTROS ENDPOINTS EXISTENTES ==============
-
-    @GetMapping("/all")
-    public List<ProductResponseDto> findAllList() {
-        return productService.findAll();
+    /**
+     * Productos por categoría
+     * GET /api/products/category/{categoryId}
+     * 
+     * Nota: Requiere autenticación por .anyRequest().authenticated()
+     */
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<ProductResponseDto>> findByCategoryId(
+            @PathVariable("categoryId") Long categoryId) {
+        List<ProductResponseDto> products = productService.findByCategoryId(categoryId);
+        return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/{id}")
-    public ProductResponseDto findOne(@PathVariable("id") Long id) {
-        return productService.findOne(id);
-    }
+    // ============== ENDPOINTS DE MODIFICACIÓN ==============
 
-    @PostMapping
-    public ResponseEntity<ProductResponseDto> create(@Valid @RequestBody CreateProductDto dto) {
-        ProductResponseDto created = productService.create(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
-
+    /**
+     * Actualizar producto
+     * PUT /api/products/{id}
+     * 
+     * Nota: NO tiene @PreAuthorize aquí porque la validación de ownership
+     * se hace EN EL SERVICIO (ver Práctica 13)
+     * 
+     * El servicio valida:
+     * - Si eres USER → Solo puedes actualizar TUS productos
+     * - Si eres ADMIN o MODERATOR → Puedes actualizar CUALQUIER producto
+     */
     @PutMapping("/{id}")
-    public ProductResponseDto update(@PathVariable("id") Long id, @Valid @RequestBody UpdateProductDto dto) {
-        return productService.update(id, dto);
+    public ResponseEntity<ProductResponseDto> update(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody UpdateProductDto dto,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        ProductResponseDto updated = productService.update(id, dto, currentUser);
+        return ResponseEntity.ok(updated);
     }
+
+    /**
+     * Eliminar producto
+     * DELETE /api/products/{id}
+     * 
+     * Nota: NO tiene @PreAuthorize aquí porque la validación de ownership
+     * se hace EN EL SERVICIO (ver Práctica 13)
+     * 
+     * El servicio valida:
+     * - Si eres USER → Solo puedes eliminar TUS productos
+     * - Si eres ADMIN o MODERATOR → Puedes eliminar CUALQUIER producto
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        productService.delete(id, currentUser);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ============== ENDPOINTS ADICIONALES (EXISTENTES) ==============
 
     @PatchMapping("/{id}")
     public ProductResponseDto partialUpdate(@PathVariable("id") Long id,
             @Valid @RequestBody PartialUpdateProductDto dto) {
         return productService.partialUpdate(id, dto);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
-        productService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/validate-name")
@@ -156,10 +229,5 @@ public class ProductController {
     @GetMapping("/user/{userId}/all")
     public List<ProductResponseDto> findByUserIdList(@PathVariable("userId") Long userId) {
         return productService.findByUserId(userId);
-    }
-
-    @GetMapping("/category/{categoryId}")
-    public List<ProductResponseDto> findByCategoryId(@PathVariable("categoryId") Long categoryId) {
-        return productService.findByCategoryId(categoryId);
     }
 }

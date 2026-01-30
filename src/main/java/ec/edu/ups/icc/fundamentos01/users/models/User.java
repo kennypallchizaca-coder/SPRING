@@ -62,7 +62,7 @@ public class User {
      * @return instancia de User para lógica de negocio
      */
     public static User fromDto(CreateUserDto dto) {
-        return new User(0, dto.name, dto.email, "secret");
+        return new User(0, dto.name, dto.email, dto.password);
     }
 
     /**

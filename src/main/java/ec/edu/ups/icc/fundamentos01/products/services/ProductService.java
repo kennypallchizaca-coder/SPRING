@@ -9,6 +9,7 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.CreateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.PartialUpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.ProductResponseDto;
 import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
+import ec.edu.ups.icc.fundamentos01.security.services.UserDetailsImpl;
 
 public interface ProductService {
 
@@ -18,11 +19,11 @@ public interface ProductService {
 
     ProductResponseDto create(CreateProductDto dto);
 
-    ProductResponseDto update(Long id, UpdateProductDto dto);
+    ProductResponseDto update(Long id, UpdateProductDto dto, UserDetailsImpl currentUser);
 
     ProductResponseDto partialUpdate(Long id, PartialUpdateProductDto dto);
 
-    void delete(Long id);
+    void delete(Long id, UserDetailsImpl currentUser);
 
     boolean validateProductName(String name, int id);
 

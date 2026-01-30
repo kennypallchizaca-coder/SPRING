@@ -10,6 +10,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ import ec.edu.ups.icc.fundamentos01.products.dtos.UpdateProductDto;
 import ec.edu.ups.icc.fundamentos01.products.entities.ProductEntity;
 import ec.edu.ups.icc.fundamentos01.products.models.Product;
 import ec.edu.ups.icc.fundamentos01.products.repositories.ProductRepository;
+import ec.edu.ups.icc.fundamentos01.security.services.UserDetailsImpl;
 import ec.edu.ups.icc.fundamentos01.users.entities.UserEntity;
 import ec.edu.ups.icc.fundamentos01.users.repositories.UserRepository;
 import org.hibernate.Hibernate;
@@ -111,26 +114,48 @@ public class ProductServiceImpl implements ProductService {
         return toResponseDto(saved);
     }
 
+    /**
+     * Actualizar producto con validación de ownership
+     * 
+     * Validación:
+     * - Si eres ADMIN o MODERATOR → Puedes actualizar cualquier producto
+     * - Si eres USER → Solo puedes actualizar TUS productos
+     * 
+     * @param id ID del producto a actualizar
+     * @param dto Datos para actualizar
+     * @param currentUser Usuario autenticado (del JWT)
+     * @throws AccessDeniedException si no eres dueño ni tienes rol privilegiado
+     */
     @Override
-    public ProductResponseDto update(Long id, UpdateProductDto dto) {
+    @Transactional
+    public ProductResponseDto update(Long id, UpdateProductDto dto, UserDetailsImpl currentUser) {
+        // 1. VALIDAR NOMBRE ÚNICO
         productRepo.findByName(dto.name).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
                 throw new ConflictException("Ya existe otro producto con el nombre: " + dto.name);
             }
         });
 
+        // 2. BUSCAR PRODUCTO EXISTENTE
         ProductEntity existingEntity = productRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
 
+        // 3. VALIDACIÓN DE OWNERSHIP (pasando el usuario)
+        validateOwnership(existingEntity, currentUser);
+
+        // Si pasa la validación, actualizar
+        // 4. ACTUALIZAR CAMPOS
         existingEntity.setName(dto.name);
         existingEntity.setDescription(dto.description);
         existingEntity.setPrice(dto.price);
         existingEntity.setStock(dto.stock);
 
+        // 5. VALIDAR Y ACTUALIZAR CATEGORÍAS
         Set<CategoryEntity> categories = validateAndGetCategories(dto.categoryIds);
         existingEntity.clearCategories();
         existingEntity.setCategories(categories);
 
+        // 6. PERSISTIR Y RESPONDER
         ProductEntity saved = productRepo.save(existingEntity);
         return toResponseDto(saved);
     }
@@ -157,14 +182,30 @@ public class ProductServiceImpl implements ProductService {
         return toResponseDto(saved);
     }
 
+    /**
+     * Eliminar producto con validación de ownership
+     * 
+     * Validación:
+     * - Si eres ADMIN o MODERATOR → Puedes eliminar cualquier producto
+     * - Si eres USER → Solo puedes eliminar TUS productos
+     * 
+     * @param id ID del producto a eliminar
+     * @param currentUser Usuario autenticado (del JWT)
+     * @throws AccessDeniedException si no eres dueño ni tienes rol privilegiado
+     */
     @Override
-    public void delete(Long id) {
-        productRepo.findById(id)
-                .ifPresentOrElse(
-                        productRepo::delete,
-                        () -> {
-                            throw new IllegalStateException("Producto no encontrado");
-                        });
+    @Transactional
+    public void delete(Long id, UserDetailsImpl currentUser) {
+        // 1. BUSCAR PRODUCTO EXISTENTE
+        ProductEntity product = productRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Producto no encontrado"));
+        
+        // 2. VALIDACIÓN DE OWNERSHIP (pasando el usuario)
+        validateOwnership(product, currentUser);
+
+        // Si pasa la validación, eliminar
+        // 3. ELIMINAR
+        productRepo.delete(product);
     }
 
     @Override
@@ -339,6 +380,53 @@ public class ProductServiceImpl implements ProductService {
         dto.updatedAt = entity.getUpdatedAt();
 
         return dto;
+    }
+
+    // ============== MÉTODOS DE VALIDACIÓN DE OWNERSHIP ==============
+
+    /**
+     * Valida si el usuario puede modificar/eliminar el producto
+     * 
+     * Lógica:
+     * 1. Si tiene ROLE_ADMIN → Puede modificar cualquier producto
+     * 2. Si tiene ROLE_MODERATOR → Puede modificar cualquier producto
+     * 3. Si es ROLE_USER → Solo puede modificar sus propios productos
+     * 
+     * @param product Producto a validar
+     * @param currentUser Usuario autenticado (del JWT)
+     * @throws AccessDeniedException si no tiene permisos
+     */
+    private void validateOwnership(ProductEntity product, UserDetailsImpl currentUser) {
+        // ADMIN y MODERATOR pueden modificar cualquier producto
+        if (hasAnyRole(currentUser, "ROLE_ADMIN", "ROLE_MODERATOR")) {
+            return;  // ← Pasa la validación automáticamente
+        }
+
+        // USER solo puede modificar sus propios productos
+        if (!product.getOwner().getId().equals(currentUser.getId())) {
+            // ← Lanza excepción que será capturada por GlobalExceptionHandler
+            throw new AccessDeniedException("No puedes modificar productos ajenos");
+        }
+
+        // Si llega aquí, es el dueño → Pasa la validación
+    }
+
+    /**
+     * Verifica si el usuario tiene alguno de los roles especificados
+     * 
+     * @param user Usuario a verificar
+     * @param roles Roles a buscar
+     * @return true si tiene al menos uno de los roles
+     */
+    private boolean hasAnyRole(UserDetailsImpl user, String... roles) {
+        for (String role : roles) {
+            for (GrantedAuthority authority : user.getAuthorities()) {
+                if (authority.getAuthority().equals(role)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private CategoryResponseDto toCategoryResponseDto(CategoryEntity category) {

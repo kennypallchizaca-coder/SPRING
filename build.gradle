@@ -1,12 +1,11 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.0'
+	id 'org.springframework.boot' version '3.4.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'ec.edu.ups.icc'
 version = '0.0.1-SNAPSHOT'
-description = 'Demo project for Spring Boot'
 
 java {
 	toolchain {
@@ -19,24 +18,37 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+	// ===== WEB =====
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// ===== DEVTOOLS =====
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	
-	// JPA + PostgreSQL dependencies
+
+	// ===== JPA + POSTGRESQL =====
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'org.postgresql:postgresql'
-	
-	// Jakarta Validation (Bean Validation)
+
+	// ===== VALIDACIÓN =====
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+	// ===== SEGURIDAD =====
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// ===== JWT =====
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+	// ===== JACKSON (Java Time: LocalDate, LocalDateTime) =====
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+	// ===== TESTING =====
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
-}
-
-tasks.withType(JavaCompile) {
-	options.compilerArgs.add('-parameters')
 }

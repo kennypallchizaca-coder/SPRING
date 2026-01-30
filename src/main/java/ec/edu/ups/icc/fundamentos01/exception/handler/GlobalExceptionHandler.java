@@ -5,6 +5,9 @@ import ec.edu.ups.icc.fundamentos01.exception.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -78,6 +81,58 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .badRequest()
+                .body(response);
+    }
+
+    /**
+     * Maneja AuthorizationDeniedException (Spring Security 6.x).
+     * Se lanza cuando @PreAuthorize evalúa a false para un usuario autenticado.
+     */
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+            AuthorizationDeniedException ex,
+            HttpServletRequest request) {
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "No tienes permisos para acceder a este recurso",
+                request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(response);
+    }
+
+    /**
+     * Maneja AccessDeniedException (Spring Security legacy o validaciones manuales).
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage(),  // ← Usa el mensaje personalizado de la excepción
+                request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(response);
+    }
+
+    /**
+     * Maneja errores de autenticación (login inválido, credenciales incorrectas).
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+            AuthenticationException ex,
+            HttpServletRequest request) {
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Credenciales inválidas",
+                request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(response);
     }
 
